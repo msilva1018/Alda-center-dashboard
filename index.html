@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Program Board — Alan Alda Center for Communicating Science</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --crimson:#8D2138;
+  --crimson-deep:#6E1A2C;
+  --crimson-wash:#F6EBEE;
+  --ink:#1E1C1D;
+  --muted:#6B6462;
+  --faint:#96908D;
+  --canvas:#EDEBE9;
+  --column:#E4E1DE;
+  --surface:#FFFFFF;
+  --line:#D7D2CE;
+  --line-soft:#E7E3DF;
+  --focus:#2F6B6B;
+  --radius:6px;
+  --shadow-card:0 1px 2px rgba(30,28,29,.10);
+  --shadow-lift:0 8px 24px rgba(30,28,29,.18);
+  --shadow-panel:-12px 0 40px rgba(30,28,29,.16);
+  --sans:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --serif:"Bodoni Moda",Georgia,"Times New Roman",serif;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--canvas);color:var(--ink);
+  font-family:var(--sans);font-size:14px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:3px}
+
+/* ---------- top bar ---------- */
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:20px;padding:12px 24px;flex:none;
+}
+.logo{height:46px;width:auto;display:block}
+.topbar-spacer{flex:1}
+.search{position:relative;display:flex;align-items:center}
+.search svg{position:absolute;left:10px;pointer-events:none;color:var(--faint)}
+.search input{
+  width:250px;padding:7px 12px 7px 32px;border:1px solid var(--line);
+  border-radius:var(--radius);background:#FBFAF9;
+}
+.search input:focus{background:#fff;border-color:var(--crimson)}
+.btn{
+  border:1px solid var(--line);background:var(--surface);
+  padding:7px 14px;border-radius:var(--radius);font-weight:500;
+}
+.btn:hover{background:#F6F4F2}
+.btn-primary{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.btn-primary:hover{background:var(--crimson-deep);border-color:var(--crimson-deep)}
+.btn-quiet{border-color:transparent;background:transparent;color:var(--muted);padding:6px 10px}
+.btn-quiet:hover{background:#F0EDEB;color:var(--ink)}
+.team{display:flex}
+.team .avatar{margin-left:-6px;border:2px solid #fff}
+
+/* ---------- board header ---------- */
+.header{padding:18px 24px 0;flex:none;background:var(--canvas)}
+.header-top{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.board-title{
+  font-family:var(--serif);font-size:30px;font-weight:600;letter-spacing:.005em;
+  margin:0;line-height:1.1;background:none;border:none;padding:0 2px;
+  min-width:160px;
+}
+.board-title:focus{outline:none;background:#fff;border-radius:4px;box-shadow:0 0 0 2px var(--crimson)}
+.stats{display:flex;gap:18px;padding-bottom:5px;color:var(--muted);font-size:13px}
+.stats b{color:var(--ink);font-weight:600}
+.stats .overdue b{color:var(--crimson)}
+.rule{height:2px;background:var(--ink);margin:14px 0 0}
+.toolbar{display:flex;align-items:center;gap:6px;padding:8px 0 12px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;margin-right:12px}
+.tab{
+  border:none;background:none;padding:6px 2px;margin-right:18px;font-weight:600;
+  color:var(--muted);border-bottom:2px solid transparent;border-radius:0;
+}
+.tab[aria-selected="true"]{color:var(--crimson);border-bottom-color:var(--crimson)}
+.toolbar-spacer{flex:1}
+.ctl{display:inline-flex;align-items:center;gap:6px;position:relative}
+.ctl-label{color:var(--muted);font-size:13px}
+select.ctl-select{
+  border:1px solid var(--line);border-radius:var(--radius);
+  padding:6px 8px;background:var(--surface);font-weight:500;
+}
+.chip-count{
+  background:var(--crimson);color:#fff;border-radius:9px;padding:0 6px;
+  font-size:11px;font-weight:700;margin-left:2px;
+}
+
+/* ---------- popover ---------- */
+.pop{
+  position:absolute;top:calc(100% + 6px);right:0;z-index:60;width:250px;
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow-lift);padding:6px;max-height:60vh;overflow:auto;
+}
+.pop[hidden]{display:none}
+.pop-group{padding:6px 8px 8px}
+.pop-group + .pop-group{border-top:1px solid var(--line-soft)}
+.pop-head{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.pop-item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer}
+.pop-item:hover{background:#F4F1EF}
+.pop-item input{accent-color:var(--crimson);margin:0}
+.pop-foot{display:flex;justify-content:space-between;padding:6px 8px;border-top:1px solid var(--line-soft)}
+
+/* ---------- board ---------- */
+.board{
+  flex:1;display:flex;gap:14px;padding:0 24px 20px;
+  overflow-x:auto;overflow-y:hidden;align-items:flex-start;
+}
+.board[hidden],.charts[hidden]{display:none}
+.bucket{
+  flex:0 0 288px;max-height:100%;display:flex;flex-direction:column;
+  background:var(--column);border-radius:8px;padding:10px 8px 8px;
+}
+.bucket.drag-target{background:#DAD4D0;box-shadow:inset 0 0 0 2px var(--crimson)}
+.bucket-head{display:flex;align-items:center;gap:6px;padding:0 4px 8px}
+.bucket-name{
+  font-weight:700;font-size:14px;border:none;background:none;padding:2px 4px;
+  border-radius:4px;flex:1;min-width:0;
+}
+.bucket-name:focus{outline:none;background:#fff;box-shadow:0 0 0 2px var(--crimson)}
+.bucket-count{color:var(--muted);font-size:12px;font-weight:600}
+.bucket-head .x{opacity:0;transition:opacity .12s}
+.bucket:hover .bucket-head .x,.bucket-head .x:focus-visible{opacity:1}
+@media (hover:none){.bucket-head .x{opacity:1}}
+.bucket-list{overflow-y:auto;flex:1;padding:2px 2px 4px;display:flex;flex-direction:column;gap:8px}
+.bucket-empty{
+  border:1px dashed var(--line);border-radius:var(--radius);padding:14px 12px;
+  color:var(--muted);font-size:13px;text-align:center;
+}
+.add-task{
+  width:100%;text-align:left;border:1px dashed var(--line);background:transparent;
+  color:var(--muted);padding:8px 10px;border-radius:var(--radius);margin-bottom:8px;font-weight:500;
+}
+.add-task:hover{background:#fff;color:var(--crimson);border-color:var(--crimson)}
+.add-bucket{flex:0 0 240px;background:transparent}
+.add-bucket .add-task{border-style:dashed;padding:12px}
+
+/* ---------- card ---------- */
+.card{
+  background:var(--surface);border-radius:var(--radius);border:1px solid var(--line-soft);
+  box-shadow:var(--shadow-card);padding:10px 11px;cursor:pointer;
+}
+.card:hover{border-color:var(--line)}
+.card.dragging{opacity:.4}
+.card.done .card-title{color:var(--muted)}
+.labels{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px}
+.label-bar{height:5px;width:34px;border-radius:3px}
+.card-title{font-weight:500;line-height:1.35;margin:0 0 8px;word-break:break-word}
+.card-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+.meta-item{display:inline-flex;align-items:center;gap:4px}
+.due{padding:1px 6px;border-radius:10px;background:#F0EDEB}
+.due.soon{background:#FDF3E3;color:#7A5410}
+.due.late{background:var(--crimson-wash);color:var(--crimson-deep);font-weight:600}
+.card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:9px}
+.avatar{
+  width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;color:#fff;font-size:10px;font-weight:700;letter-spacing:.02em;flex:none;
+}
+.avatar.sm{width:20px;height:20px;font-size:9px}
+.avatars{display:flex}
+.avatars .avatar + .avatar{margin-left:-7px;border:2px solid #fff}
+.prio{font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+.prio.urgent{color:var(--crimson)}
+.prio.important{color:#A9601B}
+.progress-dot{width:13px;height:13px;flex:none}
+
+/* ---------- charts ---------- */
+.charts{flex:1;overflow:auto;padding:4px 24px 28px}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;max-width:980px}
+.panel{background:var(--surface);border:1px solid var(--line-soft);border-radius:8px;padding:16px 18px}
+.panel h3{margin:0 0 14px;font-size:14px;font-weight:700}
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:13px;flex:1}
+.legend-row{display:flex;align-items:center;gap:8px}
+.swatch{width:10px;height:10px;border-radius:2px;flex:none}
+.legend-row span:nth-child(2){flex:1}
+.legend-row b{font-variant-numeric:tabular-nums}
+.bars{display:flex;flex-direction:column;gap:11px}
+.bar-row{display:grid;grid-template-columns:120px 1fr 28px;align-items:center;gap:10px;font-size:13px}
+.bar-track{display:block;background:#EEEAE7;border-radius:3px;height:12px;overflow:hidden}
+.bar-fill{display:block;height:100%;min-width:3px;border-radius:3px;background:var(--crimson)}
+.bar-row b{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bar-name{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- detail panel ---------- */
+.scrim{position:fixed;inset:0;background:rgba(30,28,29,.32);z-index:80}
+.scrim[hidden],.detail[hidden]{display:none}
+.detail{
+  position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:90;
+  background:var(--surface);box-shadow:var(--shadow-panel);
+  display:flex;flex-direction:column;
+}
+@media (prefers-reduced-motion:no-preference){
+  .detail{animation:slide .18s ease-out}
+  @keyframes slide{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}
+}
+.detail-head{display:flex;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line-soft)}
+.detail-title{
+  flex:1;font-size:17px;font-weight:600;border:1px solid transparent;background:none;
+  border-radius:4px;padding:5px 7px;resize:none;line-height:1.35;font-family:var(--sans);
+}
+.detail-title:hover{border-color:var(--line)}
+.detail-title:focus{outline:none;border-color:var(--crimson)}
+.detail-body{overflow-y:auto;padding:16px 18px 24px;flex:1}
+.field{margin-bottom:15px}
+.field > label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+.field select,.field input[type=date],.field textarea{
+  width:100%;border:1px solid var(--line);border-radius:var(--radius);
+  padding:7px 9px;background:#FBFAF9;font-family:var(--sans);
+}
+.field textarea{min-height:88px;resize:vertical;line-height:1.5}
+.field select:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--crimson);background:#fff}
+.two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.toggle-row{display:flex;flex-wrap:wrap;gap:6px}
+.toggle{
+  border:1px solid var(--line);background:#FBFAF9;border-radius:14px;
+  padding:4px 11px;font-size:13px;display:inline-flex;align-items:center;gap:6px;
+}
+.toggle[aria-pressed="true"]{border-color:transparent;color:#fff;font-weight:500}
+.toggle .swatch{width:8px;height:8px;border-radius:50%}
+.toggle[aria-pressed="true"] .swatch{background:#fff!important}
+.check-list{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.check-item{display:flex;align-items:center;gap:8px;padding:4px 2px;border-radius:4px}
+.check-item:hover{background:#F6F4F2}
+.check-item input[type=checkbox]{accent-color:var(--crimson);flex:none}
+.check-item input[type=text]{flex:1;border:none;background:none;padding:2px 4px;border-radius:3px}
+.check-item input[type=text]:focus{outline:none;background:#fff;box-shadow:0 0 0 1px var(--line)}
+.check-item.done input[type=text]{color:var(--faint);text-decoration:line-through}
+.x{border:none;background:none;color:var(--faint);padding:2px 6px;border-radius:4px;line-height:1}
+.x:hover{color:var(--crimson);background:var(--crimson-wash)}
+.detail-foot{border-top:1px solid var(--line-soft);padding:12px 18px;display:flex;justify-content:space-between}
+.btn-danger{color:var(--crimson);border-color:transparent;background:none}
+.btn-danger:hover{background:var(--crimson-wash)}
+
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- sign-in gate ---------- */
+.gate{
+  position:fixed;inset:0;z-index:200;background:var(--canvas);
+  display:flex;align-items:center;justify-content:center;padding:24px;
+}
+.gate[hidden]{display:none}
+.gate-card{width:100%;max-width:392px}
+.gate-logo{width:100%;max-width:330px;height:auto;display:block;margin:0 auto}
+.gate-rule{height:2px;background:var(--ink);margin:26px 0 22px}
+.gate-card h2{
+  font-family:var(--serif);font-weight:600;font-size:23px;margin:0 0 4px;letter-spacing:.005em;
+}
+.gate-card p{color:var(--muted);margin:0 0 18px;font-size:13px}
+.gate-field{display:flex;gap:8px}
+.gate-field input{
+  flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);
+}
+.gate-field input:focus{outline:none;border-color:var(--crimson);box-shadow:0 0 0 3px var(--crimson-wash)}
+.gate-err{color:var(--crimson);font-size:13px;font-weight:500;margin:10px 0 0;min-height:19px}
+.gate-remember{display:flex;align-items:center;gap:7px;margin-top:14px;font-size:13px;color:var(--muted)}
+.gate-remember input{accent-color:var(--crimson);margin:0}
+
+/* ---------- modal dialog ---------- */
+.dlg-scrim{
+  position:fixed;inset:0;z-index:210;background:rgba(30,28,29,.38);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.dlg-scrim[hidden]{display:none}
+.dlg{
+  background:var(--surface);border-radius:8px;box-shadow:var(--shadow-lift);
+  width:100%;max-width:392px;padding:20px 22px 16px;
+}
+.dlg h3{margin:0 0 7px;font-size:16px;font-weight:700}
+.dlg p{margin:0 0 14px;color:var(--muted);line-height:1.5}
+.dlg input[type=password],.dlg input[type=text]{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);
+  background:#FBFAF9;margin-bottom:10px;
+}
+.dlg input:focus{outline:none;border-color:var(--crimson);background:#fff}
+.dlg code{
+  display:block;background:#F4F1EF;border:1px solid var(--line-soft);border-radius:4px;
+  padding:9px 10px;font-size:11px;word-break:break-all;margin-bottom:12px;line-height:1.5;
+}
+.dlg-foot{display:flex;justify-content:flex-end;gap:8px}
+
+.save-status{color:var(--faint);font-size:12px;margin-right:6px;white-space:nowrap}
+@media (max-width:760px){
+  .topbar{padding:10px 14px;gap:12px;flex-wrap:wrap}
+  .search input{width:150px}
+  .header{padding:14px 14px 0}
+  .board{padding:0 14px 16px}
+  .charts{padding:4px 14px 24px}
+  .board-title{font-size:24px}
+  .team{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <img class="gate-logo" id="gateLogo" alt="Alan Alda Center for Communicating Science at Stony Brook University">
+    <div class="gate-rule"></div>
+    <h2>Program board</h2>
+    <p>Enter the team password to open the board.</p>
+    <div class="gate-field">
+      <input type="password" id="gatePass" placeholder="Password" autocomplete="current-password" aria-label="Team password">
+      <button class="btn btn-primary" id="gateGo">Open board</button>
+    </div>
+    <label class="gate-remember">
+      <input type="checkbox" id="gateRemember" checked> Stay signed in on this device
+    </label>
+    <p class="gate-err" id="gateErr" role="alert"></p>
+  </div>
+</div>
+
+<header class="topbar">
+  <img class="logo" alt="Alan Alda Center for Communicating Science at Stony Brook University" src="data:image/png;base64,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">
+  <div class="topbar-spacer"></div>
+  <div class="search">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/>
+    </svg>
+    <input id="q" type="search" placeholder="Search tasks" aria-label="Search tasks">
+  </div>
+  <div class="team" id="team" aria-label="Board members"></div>
+  <button class="btn btn-primary" id="newTask">New task</button>
+</header>
+
+<div class="header">
+  <div class="header-top">
+    <h1 class="board-title" id="boardTitle" contenteditable="true" spellcheck="false"></h1>
+    <div class="stats" id="stats"></div>
+  </div>
+  <div class="rule"></div>
+  <div class="toolbar">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-view="board" aria-selected="true">Board</button>
+      <button class="tab" role="tab" data-view="charts" aria-selected="false">Charts</button>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" id="groupLabel">Group by</span>
+      <select class="ctl-select" id="groupBy" aria-labelledby="groupLabel">
+        <option value="bucket">Bucket</option>
+        <option value="progress">Progress</option>
+        <option value="priority">Priority</option>
+        <option value="assignee">Assigned to</option>
+        <option value="label">Label</option>
+      </select>
+    </div>
+    <div class="ctl">
+      <button class="btn" id="filterBtn" aria-haspopup="true" aria-expanded="false">Filter<span class="chip-count" id="filterCount" hidden>0</span></button>
+      <div class="pop" id="filterPop" hidden></div>
+    </div>
+    <div class="toolbar-spacer"></div>
+    <span class="save-status" id="saveStatus"></span>
+    <button class="btn-quiet" id="exportBtn" title="Download the board as a JSON file">Export</button>
+    <button class="btn-quiet" id="importBtn" title="Load a board from a JSON file">Import</button>
+    <input type="file" id="importFile" accept="application/json,.json" class="sr">
+    <button class="btn-quiet" id="passBtn" title="Change the team password">Password</button>
+    <button class="btn-quiet" id="lockBtn" title="Sign out on this device">Lock</button>
+    <button class="btn-quiet" id="resetBtn" title="Restore the sample content">Reset</button>
+  </div>
+</div>
+
+<main class="board" id="board" hidden></main>
+<section class="charts" id="charts" hidden></section>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="detail" id="detail" hidden aria-label="Task details">
+  <div class="detail-head">
+    <textarea class="detail-title" id="dTitle" rows="2" aria-label="Task name"></textarea>
+    <button class="x" id="dClose" aria-label="Close task details" style="font-size:20px">&times;</button>
+  </div>
+  <div class="detail-body">
+    <div class="two-up">
+      <div class="field"><label for="dBucket">Bucket</label>
+        <select id="dBucket"></select></div>
+      <div class="field"><label for="dProgress">Progress</label>
+        <select id="dProgress"></select></div>
+    </div>
+    <div class="two-up">
+      <div class="field"><label for="dPriority">Priority</label>
+        <select id="dPriority"></select></div>
+      <div class="field"><label for="dDue">Due date</label>
+        <input type="date" id="dDue"></div>
+    </div>
+    <div class="field"><label>Assigned to</label>
+      <div class="toggle-row" id="dAssignees"></div></div>
+    <div class="field"><label>Labels</label>
+      <div class="toggle-row" id="dLabels"></div></div>
+    <div class="field"><label for="dNotes">Notes</label>
+      <textarea id="dNotes" placeholder="Add context, links, or next steps"></textarea></div>
+    <div class="field"><label>Checklist</label>
+      <div class="check-list" id="dChecklist"></div>
+      <button class="btn" id="dAddCheck">Add an item</button></div>
+  </div>
+  <div class="detail-foot">
+    <button class="btn btn-danger" id="dDelete">Delete task</button>
+    <button class="btn btn-primary" id="dDone">Close</button>
+  </div>
+</aside>
+
+<div class="dlg-scrim" id="dlgScrim" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <h3 id="dlgTitle"></h3>
+    <p id="dlgBody"></p>
+    <div id="dlgExtra"></div>
+    <div class="dlg-foot">
+      <button class="btn" id="dlgCancel">Cancel</button>
+      <button class="btn btn-primary" id="dlgOk">OK</button>
+    </div>
+  </div>
+</div>
+<script>
+/* =========================================================================
+   Alan Alda Center — Program Board
+   Everything below is editable. The seed data in seed() is sample content:
+   replace the buckets, members, labels and tasks with your own, or edit in
+   the interface and use Export to save a JSON copy.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   SETTINGS — edit these two lines to change the password.
+   The password is stored as a SHA-256 hash so it is not readable in this
+   file. To set a new one, open the board and use the Password button; it
+   gives you the exact line to paste back in here.
+   Current password: alda2026
+   ------------------------------------------------------------------------- */
+const PASS_HASH = '517bae5866e846bf62866e8c42ad34f77588f52ca31999f97e3cde033f5ec62d';
+
+const STORE_KEY  = 'alda-board-v1';
+const UNLOCK_KEY = 'alda-board-unlock-v1';
+
+/* ---------- SHA-256 (works offline and over file://) ---------- */
+const SHA_K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function sha256(msg){
+  const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  const bytes=[]; const s=unescape(encodeURIComponent(msg));
+  for(let i=0;i<s.length;i++) bytes.push(s.charCodeAt(i));
+  const bitLen=bytes.length*8;
+  bytes.push(0x80);
+  while(bytes.length%64!==56) bytes.push(0);
+  for(let i=0;i<4;i++) bytes.push(0);
+  bytes.push((bitLen>>>24)&255,(bitLen>>>16)&255,(bitLen>>>8)&255,bitLen&255);
+  const h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const w=new Array(64);
+  for(let i=0;i<bytes.length;i+=64){
+    for(let t=0;t<16;t++)
+      w[t]=(bytes[i+t*4]<<24)|(bytes[i+t*4+1]<<16)|(bytes[i+t*4+2]<<8)|bytes[i+t*4+3];
+    for(let t=16;t<64;t++){
+      const a1=w[t-15], a2=w[t-2];
+      const s0=rotr(a1,7)^rotr(a1,18)^(a1>>>3);
+      const s1=rotr(a2,17)^rotr(a2,19)^(a2>>>10);
+      w[t]=(w[t-16]+s0+w[t-7]+s1)|0;
+    }
+    let [a,b,c,d,e,f,g,hh]=h;
+    for(let t=0;t<64;t++){
+      const S1=rotr(e,6)^rotr(e,11)^rotr(e,25);
+      const ch=(e&f)^(~e&g);
+      const t1=(hh+S1+ch+SHA_K[t]+w[t])|0;
+      const S0=rotr(a,2)^rotr(a,13)^rotr(a,22);
+      const maj=(a&b)^(a&c)^(b&c);
+      const t2=(S0+maj)|0;
+      hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;
+    }
+    h[0]=(h[0]+a)|0;h[1]=(h[1]+b)|0;h[2]=(h[2]+c)|0;h[3]=(h[3]+d)|0;
+    h[4]=(h[4]+e)|0;h[5]=(h[5]+f)|0;h[6]=(h[6]+g)|0;h[7]=(h[7]+hh)|0;
+  }
+  return h.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
+}
+
+const PROGRESS = [
+  {id:'notstarted', name:'Not started', color:'#96908D'},
+  {id:'inprogress', name:'In progress', color:'#3D5A80'},
+  {id:'completed',  name:'Completed',   color:'#4F6B4A'}
+];
+const PRIORITY = [
+  {id:'urgent',    name:'Urgent'},
+  {id:'important', name:'Important'},
+  {id:'medium',    name:'Medium'},
+  {id:'low',       name:'Low'}
+];
+
+function day(offset){
+  const d = new Date();
+  d.setHours(12,0,0,0);
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0,10);
+}
+
+function seed(){
+  return {
+    title:'Spring program board',
+    buckets:[
+      {id:'b1', name:'Incoming requests'},
+      {id:'b2', name:'In development'},
+      {id:'b3', name:'Scheduled'},
+      {id:'b4', name:'Delivered'}
+    ],
+    members:[
+      {id:'m1', name:'Alex Rivera',  color:'#8D2138'},
+      {id:'m2', name:'Maya Chen',    color:'#3D5A80'},
+      {id:'m3', name:'Dele Okafor',  color:'#4F6B4A'},
+      {id:'m4', name:'Sana Patel',   color:'#5B4B8A'},
+      {id:'m5', name:'Jack Brennan', color:'#2F6B6B'}
+    ],
+    labels:[
+      {id:'l1', name:'Workshops',    color:'#3D5A80'},
+      {id:'l2', name:'Courses',      color:'#4F6B4A'},
+      {id:'l3', name:'Outreach',     color:'#B07D2B'},
+      {id:'l4', name:'Grants',       color:'#5B4B8A'},
+      {id:'l5', name:'Partnerships', color:'#2F6B6B'},
+      {id:'l6', name:'Comms',        color:'#5A5A5F'}
+    ],
+    tasks:[
+      {id:'t1', bucket:'b1', title:'Scope a two-day improv intensive for the medical school',
+       progress:'notstarted', priority:'important', due:day(9), assignees:['m1'], labels:['l1','l5'],
+       notes:'Sample text. Replace with the real request details.', checklist:[
+         {id:'c1', text:'Confirm cohort size', done:false},
+         {id:'c2', text:'Share draft budget', done:false}]},
+      {id:'t2', bucket:'b1', title:'Reply to the state museum about a summer speaker series',
+       progress:'notstarted', priority:'medium', due:day(4), assignees:['m3'], labels:['l3'],
+       notes:'', checklist:[]},
+      {id:'t3', bucket:'b1', title:'Price out a distance-learning version of Distilling Your Message',
+       progress:'notstarted', priority:'low', due:'', assignees:[], labels:['l2'],
+       notes:'', checklist:[]},
+
+      {id:'t4', bucket:'b2', title:'Draft the agenda for the NIH grantee communication bootcamp',
+       progress:'inprogress', priority:'urgent', due:day(2), assignees:['m2','m4'], labels:['l1','l4'],
+       notes:'Sample text. Outline sessions, timings and facilitator assignments.', checklist:[
+         {id:'c3', text:'Day one running order', done:true},
+         {id:'c4', text:'Day two running order', done:false},
+         {id:'c5', text:'Send to program officer', done:false}]},
+      {id:'t5', bucket:'b2', title:'Rebuild the participant evaluation survey',
+       progress:'inprogress', priority:'important', due:day(6), assignees:['m4'], labels:['l2','l6'],
+       notes:'', checklist:[{id:'c6', text:'Pull last cycle questions', done:true},
+                            {id:'c7', text:'Cut to twelve items', done:false}]},
+      {id:'t6', bucket:'b2', title:'Edit the alumni panel recording into three short clips',
+       progress:'inprogress', priority:'medium', due:day(-2), assignees:['m5'], labels:['l6'],
+       notes:'Sample text. Captions still outstanding.', checklist:[]},
+      {id:'t7', bucket:'b2', title:'Write the renewal case for the hospital partnership',
+       progress:'notstarted', priority:'important', due:day(13), assignees:['m1','m2'], labels:['l5','l4'],
+       notes:'', checklist:[]},
+
+      {id:'t8', bucket:'b3', title:'Confirm room and AV for the February workshop weekend',
+       progress:'inprogress', priority:'urgent', due:day(-1), assignees:['m3'], labels:['l1'],
+       notes:'Sample text. Waiting on the campus events office.', checklist:[
+         {id:'c8', text:'Hold both studios', done:true},
+         {id:'c9', text:'Confirm mic package', done:false}]},
+      {id:'t9', bucket:'b3', title:'Recruit twelve graduate students for the spring cohort',
+       progress:'inprogress', priority:'important', due:day(7), assignees:['m4','m5'], labels:['l2','l6'],
+       notes:'', checklist:[{id:'c10', text:'Post to department lists', done:true},
+                            {id:'c11', text:'Follow up with advisors', done:false}]},
+      {id:'t10', bucket:'b3', title:'Book travel for the Chicago partner site visit',
+       progress:'notstarted', priority:'medium', due:day(16), assignees:['m1'], labels:['l5'],
+       notes:'', checklist:[]},
+
+      {id:'t11', bucket:'b4', title:'Run the December media training for the physics department',
+       progress:'completed', priority:'medium', due:day(-12), assignees:['m2','m3'], labels:['l1'],
+       notes:'', checklist:[]},
+      {id:'t12', bucket:'b4', title:'Publish the storytelling showcase recap',
+       progress:'completed', priority:'low', due:day(-6), assignees:['m5'], labels:['l6','l3'],
+       notes:'', checklist:[]},
+      {id:'t13', bucket:'b4', title:'Close out the fall outreach grant report',
+       progress:'completed', priority:'important', due:day(-4), assignees:['m4'], labels:['l4'],
+       notes:'', checklist:[]}
+    ]
+  };
+}
+
+/* ---------- state ---------- */
+let state = seed();
+let view = 'board';
+let groupBy = 'bucket';
+let query = '';
+let openId = null;
+let unlocked = false;
+const filters = {progress:new Set(), priority:new Set(), label:new Set(), assignee:new Set()};
+let dragId = null;
+
+/* ---------- storage ----------
+   Writes to every backend available, so the board keeps its data whether
+   it is opened here, opened from your desktop, or hosted on a web server.
+   Note this is per-browser storage, not a shared server. Two people on
+   two machines keep two separate copies. Use Export to hand off a copy. */
+const store = {
+  async raw(key){
+    let cloud = null, local = null;
+    try{
+      if(window.storage){
+        const r = await window.storage.get(key);
+        if(r && r.value) cloud = r.value;
+      }
+    }catch(e){}
+    try{ local = window.localStorage.getItem(key); }catch(e){}
+    return cloud || local;
+  },
+  async put(key, value){
+    let saved = false;
+    try{
+      if(window.storage){ await window.storage.set(key, value); saved = true; }
+    }catch(e){}
+    try{ window.localStorage.setItem(key, value); saved = true; }catch(e){}
+    return saved;
+  },
+  async drop(key){
+    try{ if(window.storage) await window.storage.delete(key); }catch(e){}
+    try{ window.localStorage.removeItem(key); }catch(e){}
+  },
+  async load(){
+    const v = await store.raw(STORE_KEY);
+    try{ return v ? JSON.parse(v) : null; }catch(e){ return null; }
+  },
+  async save(){
+    const ok = await store.put(STORE_KEY, JSON.stringify(state));
+    setSaveStatus(ok
+      ? 'Saved ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})
+      : 'Not saved in this browser. Use Export to keep a copy.');
+  },
+  async clear(){ await store.drop(STORE_KEY); }
+};
+
+let saveTimer = null;
+function setSaveStatus(text){
+  const el = $('#saveStatus');
+  if(el) el.textContent = text;
+}
+function queueSave(){
+  if(!unlocked) return;
+  setSaveStatus('Saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => store.save(), 300);
+}
+/* Write immediately and synchronously when the page is about to go away,
+   so a reload or a closed tab never drops the last edit. */
+function flushSave(){
+  if(!unlocked) return;
+  clearTimeout(saveTimer);
+  const json = JSON.stringify(state);
+  try{ window.localStorage.setItem(STORE_KEY, json); }catch(e){}
+  try{ if(window.storage) window.storage.set(STORE_KEY, json); }catch(e){}
+}
+window.addEventListener('pagehide', flushSave);
+window.addEventListener('beforeunload', flushSave);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden') flushSave();
+});
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const uid = p => p + Math.random().toString(36).slice(2,8);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const task = id => state.tasks.find(t => t.id === id);
+const member = id => state.members.find(m => m.id === id);
+const label = id => state.labels.find(l => l.id === id);
+const initials = n => n.trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
+const today = () => day(0);
+
+function dueClass(t){
+  if(!t.due || t.progress === 'completed') return '';
+  if(t.due < today()) return ' late';
+  if(t.due <= day(3)) return ' soon';
+  return '';
+}
+function fmtDate(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-').map(Number);
+  return new Date(y, m-1, d).toLocaleDateString(undefined, {month:'short', day:'numeric'});
+}
+function progressIcon(p, size){
+  const c = (PROGRESS.find(x => x.id === p) || PROGRESS[0]).color;
+  const s = size || 13;
+  if(p === 'completed')
+    return `<svg class="progress-dot" width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="7" fill="${c}"/><path d="M4.6 8.2 7 10.6l4.4-4.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  if(p === 'inprogress')
+    return `<svg class="progress-dot" width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="7" fill="none" stroke="${c}" stroke-width="1.8"/>
+      <path d="M8 1.5A6.5 6.5 0 0 1 8 14.5Z" fill="${c}"/></svg>`;
+  return `<svg class="progress-dot" width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="7" fill="none" stroke="${c}" stroke-width="1.8"/></svg>`;
+}
+function avatar(m, sm){
+  return `<span class="avatar${sm?' sm':''}" style="background:${m.color}" title="${esc(m.name)}">${esc(initials(m.name))}</span>`;
+}
+
+/* ---------- filtering ---------- */
+function visible(t){
+  if(query){
+    const hay = (t.title + ' ' + (t.notes||'')).toLowerCase();
+    if(!hay.includes(query)) return false;
+  }
+  if(filters.progress.size && !filters.progress.has(t.progress)) return false;
+  if(filters.priority.size && !filters.priority.has(t.priority)) return false;
+  if(filters.label.size && !t.labels.some(l => filters.label.has(l))) return false;
+  if(filters.assignee.size && !t.assignees.some(a => filters.assignee.has(a))) return false;
+  return true;
+}
+function filterCount(){
+  return Object.values(filters).reduce((n,s) => n + s.size, 0);
+}
+
+/* ---------- columns ---------- */
+function columns(){
+  if(groupBy === 'bucket')
+    return state.buckets.map(b => ({key:b.id, name:b.name, editable:true}));
+  if(groupBy === 'progress')
+    return PROGRESS.map(p => ({key:p.id, name:p.name}));
+  if(groupBy === 'priority')
+    return PRIORITY.map(p => ({key:p.id, name:p.name}));
+  if(groupBy === 'assignee')
+    return state.members.map(m => ({key:m.id, name:m.name})).concat([{key:'', name:'Unassigned'}]);
+  return state.labels.map(l => ({key:l.id, name:l.name})).concat([{key:'', name:'No label'}]);
+}
+function inColumn(t, key){
+  if(groupBy === 'bucket')   return t.bucket === key;
+  if(groupBy === 'progress') return t.progress === key;
+  if(groupBy === 'priority') return t.priority === key;
+  if(groupBy === 'assignee') return key === '' ? t.assignees.length === 0 : t.assignees.includes(key);
+  return key === '' ? t.labels.length === 0 : t.labels.includes(key);
+}
+function assignColumn(t, key){
+  if(groupBy === 'bucket')        t.bucket = key;
+  else if(groupBy === 'progress') t.progress = key;
+  else if(groupBy === 'priority') t.priority = key;
+  else if(groupBy === 'assignee') t.assignees = key ? [key] : [];
+  else                            t.labels = key ? [key] : [];
+}
+
+/* ---------- render ---------- */
+function render(){
+  $('#boardTitle').textContent = state.title;
+  renderTeam();
+  renderStats();
+  $('#board').hidden = view !== 'board';
+  $('#charts').hidden = view !== 'charts';
+  document.querySelectorAll('.tab').forEach(t =>
+    t.setAttribute('aria-selected', String(t.dataset.view === view)));
+  const n = filterCount();
+  $('#filterCount').hidden = n === 0;
+  $('#filterCount').textContent = n;
+  if(view === 'board') renderBoard(); else renderCharts();
+  queueSave();
+}
+
+function renderTeam(){
+  $('#team').innerHTML = state.members.slice(0,5).map(m => avatar(m)).join('');
+}
+
+function renderStats(){
+  const t = state.tasks;
+  const done = t.filter(x => x.progress === 'completed').length;
+  const late = t.filter(x => x.due && x.due < today() && x.progress !== 'completed').length;
+  $('#stats').innerHTML =
+    `<span><b>${t.length}</b> tasks</span>
+     <span><b>${done}</b> completed</span>
+     <span class="overdue"><b>${late}</b> past due</span>`;
+}
+
+function renderBoard(){
+  const board = $('#board');
+  board.innerHTML = columns().map(col => {
+    const list = state.tasks.filter(t => inColumn(t, col.key) && visible(t));
+    const nameEl = col.editable
+      ? `<input class="bucket-name" value="${esc(col.name)}" data-bucket="${col.key}" aria-label="Bucket name">`
+      : `<span class="bucket-name">${esc(col.name)}</span>`;
+    const remove = col.editable
+      ? `<button class="x" data-del-bucket="${col.key}" title="Delete bucket" aria-label="Delete bucket ${esc(col.name)}">&times;</button>` : '';
+    return `<section class="bucket" data-col="${esc(col.key)}">
+      <div class="bucket-head">${nameEl}<span class="bucket-count">${list.length}</span>${remove}</div>
+      <button class="add-task" data-add="${esc(col.key)}">+ Add a task</button>
+      <div class="bucket-list" data-col="${esc(col.key)}">
+        ${list.map(cardHTML).join('') ||
+          '<div class="bucket-empty">Nothing here yet</div>'}
+      </div>
+    </section>`;
+  }).join('') + (groupBy === 'bucket'
+    ? `<div class="add-bucket"><button class="add-task" id="addBucket">+ Add a bucket</button></div>` : '');
+  wireBoard();
+}
+
+function cardHTML(t){
+  const bars = t.labels.map(id => {
+    const l = label(id);
+    return l ? `<span class="label-bar" style="background:${l.color}" title="${esc(l.name)}"></span>` : '';
+  }).join('');
+  const checks = t.checklist.length
+    ? `<span class="meta-item">${t.checklist.filter(c => c.done).length}/${t.checklist.length} done</span>` : '';
+  const due = t.due
+    ? `<span class="due${dueClass(t)}">${fmtDate(t.due)}</span>` : '';
+  const note = t.notes
+    ? `<span class="meta-item" title="Has notes">&#9776;</span>` : '';
+  const prio = (t.priority === 'urgent' || t.priority === 'important')
+    ? `<span class="prio ${t.priority}">${t.priority === 'urgent' ? '!' : '&#8593;'} ${t.priority === 'urgent' ? 'Urgent' : 'Important'}</span>` : '';
+  const people = t.assignees.map(id => {
+    const m = member(id); return m ? avatar(m, true) : '';
+  }).join('');
+  return `<article class="card${t.progress === 'completed' ? ' done' : ''}" draggable="true" data-id="${t.id}" tabindex="0">
+    ${bars ? `<div class="labels">${bars}</div>` : ''}
+    <p class="card-title">${esc(t.title)}</p>
+    <div class="card-meta">${progressIcon(t.progress)}${due}${checks}${note}</div>
+    <div class="card-foot">${prio || '<span></span>'}<span class="avatars">${people}</span></div>
+  </article>`;
+}
+
+/* ---------- board wiring ---------- */
+function wireBoard(){
+  document.querySelectorAll('.card').forEach(el => {
+    el.addEventListener('click', () => openDetail(el.dataset.id));
+    el.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openDetail(el.dataset.id); }
+    });
+    el.addEventListener('dragstart', e => {
+      dragId = el.dataset.id;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setData('text/plain', dragId); }catch(err){}
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      document.querySelectorAll('.drag-target').forEach(x => x.classList.remove('drag-target'));
+      dragId = null;
+    });
+  });
+
+  document.querySelectorAll('.bucket-list').forEach(list => {
+    list.addEventListener('dragover', e => {
+      e.preventDefault();
+      list.closest('.bucket').classList.add('drag-target');
+    });
+    list.addEventListener('dragleave', e => {
+      if(!list.contains(e.relatedTarget)) list.closest('.bucket').classList.remove('drag-target');
+    });
+    list.addEventListener('drop', e => {
+      e.preventDefault();
+      list.closest('.bucket').classList.remove('drag-target');
+      if(!dragId) return;
+      drop(dragId, list.dataset.col, afterElement(list, e.clientY));
+    });
+  });
+
+  document.querySelectorAll('[data-add]').forEach(btn =>
+    btn.addEventListener('click', () => addTask(btn.dataset.add)));
+  document.querySelectorAll('[data-bucket]').forEach(inp =>
+    inp.addEventListener('change', () => {
+      const b = state.buckets.find(x => x.id === inp.dataset.bucket);
+      if(b){ b.name = inp.value.trim() || 'Untitled bucket'; render(); }
+    }));
+  document.querySelectorAll('[data-del-bucket]').forEach(btn =>
+    btn.addEventListener('click', () => deleteBucket(btn.dataset.delBucket)));
+  const ab = $('#addBucket');
+  if(ab) ab.addEventListener('click', addBucket);
+}
+
+function afterElement(list, y){
+  const cards = [...list.querySelectorAll('.card:not(.dragging)')];
+  for(const c of cards){
+    const box = c.getBoundingClientRect();
+    if(y < box.top + box.height / 2) return c;
+  }
+  return null;
+}
+
+function drop(id, colKey, beforeEl){
+  const t = task(id);
+  if(!t) return;
+  assignColumn(t, colKey);
+  const from = state.tasks.indexOf(t);
+  state.tasks.splice(from, 1);
+  let at = state.tasks.length;
+  if(beforeEl){
+    const idx = state.tasks.findIndex(x => x.id === beforeEl.dataset.id);
+    if(idx > -1) at = idx;
+  }else{
+    const last = state.tasks.filter(x => inColumn(x, colKey)).pop();
+    if(last) at = state.tasks.indexOf(last) + 1;
+  }
+  state.tasks.splice(at, 0, t);
+  render();
+}
+
+/* ---------- create / delete ---------- */
+function addTask(colKey){
+  const t = {
+    id:uid('t'), bucket:state.buckets[0] ? state.buckets[0].id : '',
+    title:'New task', progress:'notstarted', priority:'medium',
+    due:'', assignees:[], labels:[], notes:'', checklist:[]
+  };
+  assignColumn(t, colKey);
+  state.tasks.unshift(t);
+  render();
+  openDetail(t.id);
+  setTimeout(() => { $('#dTitle').select(); }, 60);
+}
+function addBucket(){
+  state.buckets.push({id:uid('b'), name:'New bucket'});
+  render();
+  const inputs = document.querySelectorAll('[data-bucket]');
+  const last = inputs[inputs.length - 1];
+  if(last){ last.focus(); last.select(); }
+}
+async function deleteBucket(id){
+  if(state.buckets.length < 2){
+    await dialog({title:'Keep at least one bucket', body:'A board needs somewhere to put tasks.', ok:'Got it', noCancel:true});
+    return;
+  }
+  const b = state.buckets.find(x => x.id === id);
+  const count = state.tasks.filter(t => t.bucket === id).length;
+  const moveTo = state.buckets[0].id === id ? state.buckets[1].name : state.buckets[0].name;
+  if(count){
+    const go = await dialog({
+      title:`Delete "${b.name}"?`,
+      body:`Its ${count} task${count>1?'s':''} will move to "${moveTo}".`,
+      ok:'Delete bucket', danger:true});
+    if(!go) return;
+  }
+  state.buckets = state.buckets.filter(x => x.id !== id);
+  const fallback = state.buckets[0].id;
+  state.tasks.forEach(t => { if(t.bucket === id) t.bucket = fallback; });
+  render();
+}
+
+/* ---------- detail panel ---------- */
+function openDetail(id){
+  const t = task(id);
+  if(!t) return;
+  openId = id;
+  $('#dTitle').value = t.title;
+  $('#dBucket').innerHTML = state.buckets.map(b =>
+    `<option value="${b.id}"${b.id===t.bucket?' selected':''}>${esc(b.name)}</option>`).join('');
+  $('#dProgress').innerHTML = PROGRESS.map(p =>
+    `<option value="${p.id}"${p.id===t.progress?' selected':''}>${p.name}</option>`).join('');
+  $('#dPriority').innerHTML = PRIORITY.map(p =>
+    `<option value="${p.id}"${p.id===t.priority?' selected':''}>${p.name}</option>`).join('');
+  $('#dDue').value = t.due || '';
+  $('#dNotes').value = t.notes || '';
+  $('#dAssignees').innerHTML = state.members.map(m =>
+    `<button class="toggle" data-member="${m.id}" aria-pressed="${t.assignees.includes(m.id)}"
+       style="${t.assignees.includes(m.id)?`background:${m.color}`:''}">
+       <span class="swatch" style="background:${m.color}"></span>${esc(m.name)}</button>`).join('');
+  $('#dLabels').innerHTML = state.labels.map(l =>
+    `<button class="toggle" data-label="${l.id}" aria-pressed="${t.labels.includes(l.id)}"
+       style="${t.labels.includes(l.id)?`background:${l.color}`:''}">
+       <span class="swatch" style="background:${l.color}"></span>${esc(l.name)}</button>`).join('');
+  renderChecklist(t);
+  $('#scrim').hidden = false;
+  requestAnimationFrame(growTitle);
+  $('#detail').hidden = false;
+}
+function renderChecklist(t){
+  $('#dChecklist').innerHTML = t.checklist.map(c =>
+    `<div class="check-item${c.done?' done':''}" data-check="${c.id}">
+       <input type="checkbox"${c.done?' checked':''} aria-label="Mark done">
+       <input type="text" value="${esc(c.text)}" aria-label="Checklist item">
+       <button class="x" data-del-check="${c.id}" aria-label="Remove item">&times;</button>
+     </div>`).join('');
+}
+function closeDetail(){
+  openId = null;
+  $('#scrim').hidden = true;
+  $('#detail').hidden = true;
+  render();
+}
+function edit(fn){
+  const t = task(openId);
+  if(!t) return;
+  fn(t);
+  queueSave();
+  if(view === 'board') renderBoard(); else renderCharts();
+  renderStats();
+}
+
+/* ---------- charts ---------- */
+function renderCharts(){
+  const list = state.tasks.filter(visible);
+  const byProgress = PROGRESS.map(p => ({
+    name:p.name, color:p.color, n:list.filter(t => t.progress === p.id).length }));
+  const total = list.length || 1;
+
+  let acc = 0;
+  const arcs = byProgress.map(s => {
+    const frac = s.n / total, r = 54, C = 2 * Math.PI * r;
+    const seg = `<circle cx="70" cy="70" r="${r}" fill="none" stroke="${s.color}" stroke-width="22"
+      stroke-dasharray="${(frac*C).toFixed(2)} ${C.toFixed(2)}"
+      stroke-dashoffset="${(-acc*C).toFixed(2)}" transform="rotate(-90 70 70)"/>`;
+    acc += frac;
+    return seg;
+  }).join('');
+
+  const bars = (rows, accent) => `<div class="bars">${rows.map(r => {
+    const max = Math.max(1, ...rows.map(x => x.n));
+    return `<div class="bar-row"><span class="bar-name" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${(r.n/max*100).toFixed(1)}%;background:${r.color||accent}"></span></span>
+      <b>${r.n}</b></div>`;
+  }).join('')}</div>`;
+
+  const byBucket = state.buckets.map(b => ({name:b.name, n:list.filter(t => t.bucket === b.id).length}));
+  const byPriority = PRIORITY.map(p => ({name:p.name, n:list.filter(t => t.priority === p.id).length}));
+  const byMember = state.members.map(m => ({
+    name:m.name, color:m.color,
+    n:list.filter(t => t.assignees.includes(m.id) && t.progress !== 'completed').length
+  })).concat([{name:'Unassigned', n:list.filter(t => !t.assignees.length && t.progress !== 'completed').length}]);
+
+  $('#charts').innerHTML = `<div class="chart-grid">
+    <div class="panel"><h3>Progress</h3>
+      <div class="donut-wrap">
+        <svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Task progress breakdown">
+          <circle cx="70" cy="70" r="54" fill="none" stroke="#EEEAE7" stroke-width="22"/>
+          ${arcs}
+          <text x="70" y="65" text-anchor="middle" font-size="24" font-weight="700" fill="#1E1C1D">${list.length}</text>
+          <text x="70" y="82" text-anchor="middle" font-size="11" fill="#6B6462">tasks</text>
+        </svg>
+        <div class="legend">${byProgress.map(s =>
+          `<div class="legend-row"><span class="swatch" style="background:${s.color}"></span>
+           <span>${s.name}</span><b>${s.n}</b></div>`).join('')}</div>
+      </div></div>
+    <div class="panel"><h3>Tasks by bucket</h3>${bars(byBucket, '#8D2138')}</div>
+    <div class="panel"><h3>Tasks by priority</h3>${bars(byPriority, '#8D2138')}</div>
+    <div class="panel"><h3>Open tasks by person</h3>${bars(byMember, '#6B6462')}</div>
+  </div>`;
+}
+
+/* ---------- filter popover ---------- */
+function renderFilterPop(){
+  const group = (key, items, colorKey) => `<div class="pop-group">
+    <div class="pop-head">${key === 'assignee' ? 'Assigned to' : key[0].toUpperCase() + key.slice(1)}</div>
+    ${items.map(i => `<label class="pop-item">
+      <input type="checkbox" data-f="${key}" value="${i.id}"${filters[key].has(i.id) ? ' checked' : ''}>
+      ${colorKey ? `<span class="swatch" style="background:${i.color}"></span>` : ''}
+      <span>${esc(i.name)}</span></label>`).join('')}
+  </div>`;
+  $('#filterPop').innerHTML =
+    group('progress', PROGRESS, true) +
+    group('priority', PRIORITY, false) +
+    group('label', state.labels, true) +
+    group('assignee', state.members, true) +
+    `<div class="pop-foot"><button class="btn-quiet" id="clearFilters">Clear all</button>
+     <button class="btn-quiet" id="closeFilters">Done</button></div>`;
+
+  $('#filterPop').querySelectorAll('input[data-f]').forEach(cb =>
+    cb.addEventListener('change', () => {
+      const set = filters[cb.dataset.f];
+      cb.checked ? set.add(cb.value) : set.delete(cb.value);
+      render();
+    }));
+  $('#clearFilters').addEventListener('click', () => {
+    Object.values(filters).forEach(s => s.clear());
+    renderFilterPop(); render();
+  });
+  $('#closeFilters').addEventListener('click', toggleFilter);
+}
+function toggleFilter(){
+  const pop = $('#filterPop'), btn = $('#filterBtn');
+  const open = pop.hidden;
+  if(open) renderFilterPop();
+  pop.hidden = !open;
+  btn.setAttribute('aria-expanded', String(open));
+}
+
+/* ---------- export / import ---------- */
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = state.title.replace(/\s+/g, '-').toLowerCase() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importJSON(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try{
+      const data = JSON.parse(r.result);
+      if(!data.tasks || !data.buckets) throw new Error('shape');
+      state = data;
+      render();
+    }catch(e){
+      dialog({title:'That file did not load',
+              body:'Choose a JSON file saved with the Export button on this board.',
+              ok:'Got it', noCancel:true});
+    }
+  };
+  r.readAsText(file);
+}
+
+
+/* ---------- dialog (replaces confirm/alert, which sandboxed frames block) ---------- */
+let dlgResolve = null;
+function dialog(opts){
+  $('#dlgTitle').textContent = opts.title || '';
+  $('#dlgBody').textContent = opts.body || '';
+  $('#dlgBody').hidden = !opts.body;
+  $('#dlgExtra').innerHTML = opts.extra || '';
+  $('#dlgOk').textContent = opts.ok || 'OK';
+  $('#dlgOk').classList.toggle('btn-danger', !!opts.danger);
+  $('#dlgOk').classList.toggle('btn-primary', !opts.danger);
+  $('#dlgCancel').hidden = !!opts.noCancel;
+  $('#dlgScrim').hidden = false;
+  const first = $('#dlgExtra').querySelector('input');
+  (first || $('#dlgOk')).focus();
+  return new Promise(res => { dlgResolve = res; });
+}
+function closeDialog(value){
+  $('#dlgScrim').hidden = true;
+  const r = dlgResolve; dlgResolve = null;
+  if(r) r(value);
+}
+$('#dlgOk').addEventListener('click', () => {
+  const inputs = [...$('#dlgExtra').querySelectorAll('input')].map(i => i.value);
+  closeDialog(inputs.length ? inputs : true);
+});
+$('#dlgCancel').addEventListener('click', () => closeDialog(false));
+$('#dlgScrim').addEventListener('click', e => { if(e.target === $('#dlgScrim')) closeDialog(false); });
+$('#dlgExtra').addEventListener('keydown', e => { if(e.key === 'Enter') $('#dlgOk').click(); });
+
+/* ---------- events ---------- */
+$('#q').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+$('#groupBy').addEventListener('change', e => { groupBy = e.target.value; render(); });
+$('#filterBtn').addEventListener('click', toggleFilter);
+document.addEventListener('click', e => {
+  if(!$('#filterPop').hidden && !e.target.closest('.ctl')) toggleFilter();
+});
+document.querySelectorAll('.tab').forEach(tab =>
+  tab.addEventListener('click', () => { view = tab.dataset.view; render(); }));
+$('#newTask').addEventListener('click', () => {
+  const cols = columns();
+  addTask(cols[0] ? cols[0].key : '');
+});
+$('#boardTitle').addEventListener('blur', e => {
+  state.title = e.target.textContent.trim() || 'Untitled board';
+  render();
+});
+$('#boardTitle').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); e.target.blur(); }
+});
+$('#exportBtn').addEventListener('click', exportJSON);
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', e => {
+  if(e.target.files[0]) importJSON(e.target.files[0]);
+  e.target.value = '';
+});
+$('#resetBtn').addEventListener('click', async () => {
+  const go = await dialog({title:'Reset the board?',
+    body:'Everything on the board is replaced with the sample content. This cannot be undone.',
+    ok:'Reset board', danger:true});
+  if(!go) return;
+  await store.clear();
+  state = seed();
+  render();
+});
+
+$('#dClose').addEventListener('click', closeDetail);
+$('#dDone').addEventListener('click', closeDetail);
+$('#scrim').addEventListener('click', closeDetail);
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(!$('#dlgScrim').hidden) closeDialog(false);
+    else if(!$('#detail').hidden) closeDetail();
+    else if(!$('#filterPop').hidden) toggleFilter();
+  }
+});
+function growTitle(){
+  const el = $('#dTitle');
+  el.style.height = 'auto';
+  el.style.height = Math.max(46, el.scrollHeight) + 'px';
+}
+$('#dTitle').addEventListener('input', e => { growTitle(); edit(t => t.title = e.target.value); });
+$('#dBucket').addEventListener('change', e => edit(t => t.bucket = e.target.value));
+$('#dProgress').addEventListener('change', e => edit(t => t.progress = e.target.value));
+$('#dPriority').addEventListener('change', e => edit(t => t.priority = e.target.value));
+$('#dDue').addEventListener('change', e => edit(t => t.due = e.target.value));
+$('#dNotes').addEventListener('input', e => edit(t => t.notes = e.target.value));
+$('#dAssignees').addEventListener('click', e => {
+  const btn = e.target.closest('[data-member]');
+  if(!btn) return;
+  edit(t => {
+    const id = btn.dataset.member;
+    t.assignees = t.assignees.includes(id) ? t.assignees.filter(x => x !== id) : t.assignees.concat(id);
+  });
+  openDetail(openId);
+});
+$('#dLabels').addEventListener('click', e => {
+  const btn = e.target.closest('[data-label]');
+  if(!btn) return;
+  edit(t => {
+    const id = btn.dataset.label;
+    t.labels = t.labels.includes(id) ? t.labels.filter(x => x !== id) : t.labels.concat(id);
+  });
+  openDetail(openId);
+});
+$('#dAddCheck').addEventListener('click', () => {
+  edit(t => t.checklist.push({id:uid('c'), text:'', done:false}));
+  renderChecklist(task(openId));
+  const inputs = $('#dChecklist').querySelectorAll('input[type=text]');
+  if(inputs.length) inputs[inputs.length - 1].focus();
+});
+$('#dChecklist').addEventListener('change', e => {
+  const row = e.target.closest('[data-check]');
+  if(!row) return;
+  edit(t => {
+    const c = t.checklist.find(x => x.id === row.dataset.check);
+    if(!c) return;
+    if(e.target.type === 'checkbox') c.done = e.target.checked;
+    else c.text = e.target.value;
+  });
+  if(e.target.type === 'checkbox') renderChecklist(task(openId));
+});
+$('#dChecklist').addEventListener('click', e => {
+  const btn = e.target.closest('[data-del-check]');
+  if(!btn) return;
+  edit(t => t.checklist = t.checklist.filter(c => c.id !== btn.dataset.delCheck));
+  renderChecklist(task(openId));
+});
+$('#dDelete').addEventListener('click', async () => {
+  const go = await dialog({title:'Delete this task?', body:task(openId) ? task(openId).title : '',
+    ok:'Delete task', danger:true});
+  if(!go) return;
+  state.tasks = state.tasks.filter(t => t.id !== openId);
+  closeDetail();
+});
+
+/* ---------- password gate ---------- */
+async function unlock(remember){
+  unlocked = true;
+  $('#gate').hidden = true;
+  if(remember) await store.put(UNLOCK_KEY, PASS_HASH);
+  const saved = await store.load();
+  if(saved && saved.tasks && saved.buckets) state = saved;
+  render();
+  setSaveStatus('');
+}
+async function tryPassword(){
+  const input = $('#gatePass');
+  const err = $('#gateErr');
+  if(sha256(input.value) === PASS_HASH){
+    err.textContent = '';
+    input.value = '';
+    await unlock($('#gateRemember').checked);
+  }else{
+    err.textContent = 'That password did not match. Try again.';
+    input.select();
+  }
+}
+$('#gateGo').addEventListener('click', tryPassword);
+$('#gatePass').addEventListener('keydown', e => { if(e.key === 'Enter') tryPassword(); });
+
+$('#lockBtn').addEventListener('click', async () => {
+  clearTimeout(saveTimer);
+  await store.save();
+  await store.drop(UNLOCK_KEY);
+  unlocked = false;
+  $('#gate').hidden = false;
+  $('#gatePass').focus();
+});
+
+$('#passBtn').addEventListener('click', async () => {
+  const res = await dialog({
+    title:'Change the team password',
+    body:'Pick a new password, then paste the line below into the file so it sticks for everyone.',
+    extra:'<input type="password" id="np1" placeholder="New password" autocomplete="new-password">' +
+          '<input type="password" id="np2" placeholder="Repeat it" autocomplete="new-password">',
+    ok:'Generate line'});
+  if(!res) return;
+  const [a, b] = res;
+  if(!a || a !== b){
+    await dialog({title:'Those did not match', body:'Both fields need the same password.', ok:'Try again', noCancel:true});
+    return;
+  }
+  const line = "const PASS_HASH = '" + sha256(a) + "';";
+  await dialog({
+    title:'Paste this into the file',
+    body:'Open the HTML file in a text editor, find the line that starts with const PASS_HASH and replace it with this one. Save the file and the new password is live.',
+    extra:'<code>' + esc(line) + '</code>',
+    ok:'Done', noCancel:true});
+});
+
+/* ---------- boot ---------- */
+(async function(){
+  $('#gateLogo').src = document.querySelector('.logo').src;
+  const remembered = await store.raw(UNLOCK_KEY);
+  if(remembered === PASS_HASH) await unlock(false);
+  else $('#gatePass').focus();
+})();
+</script>
+</body>
+</html>
