@@ -15,8 +15,7 @@ plus an optional Google Sheet behind it so a team shares one board.
 Open `index.html` in a browser, or publish the repo with GitHub Pages
 (Settings > Pages > Deploy from a branch > `main` > `/ (root)`).
 
-Default password: `alda2026`. Change it with the Password button in the
-toolbar, which hands you the replacement line to paste into `index.html`.
+
 
 Without the sheet connected, every visitor gets their own private copy
 stored in their own browser. Connect the sheet to make it shared.
