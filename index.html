@@ -246,6 +246,33 @@ select.ctl-select{
 .btn-danger{color:var(--crimson);border-color:transparent;background:none}
 .btn-danger:hover{background:var(--crimson-wash)}
 
+/* ---------- links and files ---------- */
+.att-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.att{
+  display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;
+  border:1px solid var(--line-soft);background:#FBFAF9;font-size:13px;
+}
+.att:hover{border-color:var(--line)}
+.att a{color:var(--crimson-deep);text-decoration:none;font-weight:500;
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att a:hover{text-decoration:underline}
+.att .att-sub{color:var(--faint);font-size:11px;flex:none;font-variant-numeric:tabular-nums}
+.att svg{flex:none;color:var(--muted)}
+.add-row{display:flex;gap:6px;flex-wrap:wrap}
+.add-row input{
+  flex:1;min-width:0;border:1px solid var(--line);border-radius:var(--radius);
+  padding:7px 9px;background:#FBFAF9;
+}
+.add-row input:focus{outline:none;border-color:var(--crimson);background:#fff}
+.add-row input.url{flex:2 1 170px}
+.drop{
+  border:1px dashed var(--line);border-radius:var(--radius);padding:12px;
+  display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;
+}
+.drop.over{border-color:var(--crimson);background:var(--crimson-wash);color:var(--crimson-deep)}
+.hint{font-size:12px;color:var(--faint);margin:7px 0 0;min-height:17px}
+.hint.warn{color:var(--crimson)}
+
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
 /* ---------- sign-in gate ---------- */
@@ -399,8 +426,28 @@ select.ctl-select{
       <div class="toggle-row" id="dAssignees"></div></div>
     <div class="field"><label>Labels</label>
       <div class="toggle-row" id="dLabels"></div></div>
+    <div class="field"><label>Links</label>
+      <div class="att-list" id="dLinks"></div>
+      <div class="add-row">
+        <input type="url" class="url" id="linkUrl" placeholder="https://" aria-label="Link address">
+        <input type="text" id="linkLabel" placeholder="Label (optional)" aria-label="Link label">
+        <button class="btn" id="addLink">Add</button>
+      </div></div>
+    <div class="field"><label>Files</label>
+      <div class="att-list" id="dFiles"></div>
+      <div class="drop" id="drop">
+        <input type="file" id="fileInput" multiple class="sr">
+        <button class="btn" id="pickFile">Upload files</button>
+        <span>or drop them here</span>
+      </div>
+      <div class="add-row">
+        <input type="url" class="url" id="fileUrl" placeholder="Or paste a link to a file" aria-label="File link">
+        <input type="text" id="fileName" placeholder="File name" aria-label="File name">
+        <button class="btn" id="addFile">Add</button>
+      </div>
+      <p class="hint" id="fileHint"></p></div>
     <div class="field"><label for="dNotes">Notes</label>
-      <textarea id="dNotes" placeholder="Add context, links, or next steps"></textarea></div>
+      <textarea id="dNotes" placeholder="Add context or next steps"></textarea></div>
     <div class="field"><label>Checklist</label>
       <div class="check-list" id="dChecklist"></div>
       <button class="btn" id="dAddCheck">Add an item</button></div>
@@ -438,6 +485,14 @@ select.ctl-select{
    Current password: alda2026
    ------------------------------------------------------------------------- */
 const PASS_HASH = '517bae5866e846bf62866e8c42ad34f77588f52ca31999f97e3cde033f5ec62d';
+
+/* -------------------------------------------------------------------------
+   SHARED SHEET — paste your Apps Script web app URL here to make the board
+   shared. Leave SHEET_URL empty and the board stays local to each browser.
+   SHEET_TOKEN must match the TOKEN value in Code.gs.
+   ------------------------------------------------------------------------- */
+const SHEET_URL   = '';
+const SHEET_TOKEN = 'change-this-shared-token';
 
 const STORE_KEY  = 'alda-board-v1';
 const UNLOCK_KEY = 'alda-board-unlock-v1';
@@ -526,55 +581,58 @@ function seed(){
     tasks:[
       {id:'t1', bucket:'b1', title:'Scope a two-day improv intensive for the medical school',
        progress:'notstarted', priority:'important', due:day(9), assignees:['m1'], labels:['l1','l5'],
-       notes:'Sample text. Replace with the real request details.', checklist:[
+       notes:'Sample text. Replace with the real request details.', links:[], files:[], checklist:[
          {id:'c1', text:'Confirm cohort size', done:false},
          {id:'c2', text:'Share draft budget', done:false}]},
       {id:'t2', bucket:'b1', title:'Reply to the state museum about a summer speaker series',
        progress:'notstarted', priority:'medium', due:day(4), assignees:['m3'], labels:['l3'],
-       notes:'', checklist:[]},
+       notes:'', links:[], files:[], checklist:[]},
       {id:'t3', bucket:'b1', title:'Price out a distance-learning version of Distilling Your Message',
        progress:'notstarted', priority:'low', due:'', assignees:[], labels:['l2'],
-       notes:'', checklist:[]},
+       notes:'', links:[], files:[], checklist:[]},
 
       {id:'t4', bucket:'b2', title:'Draft the agenda for the NIH grantee communication bootcamp',
        progress:'inprogress', priority:'urgent', due:day(2), assignees:['m2','m4'], labels:['l1','l4'],
-       notes:'Sample text. Outline sessions, timings and facilitator assignments.', checklist:[
+       notes:'Sample text. Outline sessions, timings and facilitator assignments.', links:[], files:[], checklist:[
          {id:'c3', text:'Day one running order', done:true},
          {id:'c4', text:'Day two running order', done:false},
          {id:'c5', text:'Send to program officer', done:false}]},
       {id:'t5', bucket:'b2', title:'Rebuild the participant evaluation survey',
        progress:'inprogress', priority:'important', due:day(6), assignees:['m4'], labels:['l2','l6'],
-       notes:'', checklist:[{id:'c6', text:'Pull last cycle questions', done:true},
+       notes:'', links:[], files:[], checklist:[{id:'c6', text:'Pull last cycle questions', done:true},
                             {id:'c7', text:'Cut to twelve items', done:false}]},
       {id:'t6', bucket:'b2', title:'Edit the alumni panel recording into three short clips',
        progress:'inprogress', priority:'medium', due:day(-2), assignees:['m5'], labels:['l6'],
-       notes:'Sample text. Captions still outstanding.', checklist:[]},
+       notes:'', links:[], files:[], checklist:[]},
       {id:'t7', bucket:'b2', title:'Write the renewal case for the hospital partnership',
        progress:'notstarted', priority:'important', due:day(13), assignees:['m1','m2'], labels:['l5','l4'],
-       notes:'', checklist:[]},
+       notes:'', links:[], files:[], checklist:[]},
 
       {id:'t8', bucket:'b3', title:'Confirm room and AV for the February workshop weekend',
        progress:'inprogress', priority:'urgent', due:day(-1), assignees:['m3'], labels:['l1'],
-       notes:'Sample text. Waiting on the campus events office.', checklist:[
+       notes:'Sample text. Waiting on the campus events office.', links:[], files:[], checklist:[
          {id:'c8', text:'Hold both studios', done:true},
          {id:'c9', text:'Confirm mic package', done:false}]},
       {id:'t9', bucket:'b3', title:'Recruit twelve graduate students for the spring cohort',
        progress:'inprogress', priority:'important', due:day(7), assignees:['m4','m5'], labels:['l2','l6'],
-       notes:'', checklist:[{id:'c10', text:'Post to department lists', done:true},
+       notes:'',
+       links:[{id:'k1', url:'https://www.aldacenter.org', label:'Alda Center site'}],
+       files:[],
+       checklist:[{id:'c10', text:'Post to department lists', done:true},
                             {id:'c11', text:'Follow up with advisors', done:false}]},
       {id:'t10', bucket:'b3', title:'Book travel for the Chicago partner site visit',
        progress:'notstarted', priority:'medium', due:day(16), assignees:['m1'], labels:['l5'],
-       notes:'', checklist:[]},
+       notes:'', links:[], files:[], checklist:[]},
 
       {id:'t11', bucket:'b4', title:'Run the December media training for the physics department',
        progress:'completed', priority:'medium', due:day(-12), assignees:['m2','m3'], labels:['l1'],
-       notes:'', checklist:[]},
+       notes:'', links:[], files:[], checklist:[]},
       {id:'t12', bucket:'b4', title:'Publish the storytelling showcase recap',
        progress:'completed', priority:'low', due:day(-6), assignees:['m5'], labels:['l6','l3'],
-       notes:'', checklist:[]},
+       notes:'', links:[], files:[], checklist:[]},
       {id:'t13', bucket:'b4', title:'Close out the fall outreach grant report',
        progress:'completed', priority:'important', due:day(-4), assignees:['m4'], labels:['l4'],
-       notes:'', checklist:[]}
+       notes:'', links:[], files:[], checklist:[]}
     ]
   };
 }
@@ -624,24 +682,114 @@ const store = {
   },
   async save(){
     const ok = await store.put(STORE_KEY, JSON.stringify(state));
-    setSaveStatus(ok
-      ? 'Saved ' + new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})
-      : 'Not saved in this browser. Use Export to keep a copy.');
+    if(sync.on()) return;
+    setSaveStatus(ok ? 'Saved ' + stamp()
+                     : 'Not saved in this browser. Use Export to keep a copy.');
   },
   async clear(){ await store.drop(STORE_KEY); }
 };
 
 let saveTimer = null;
+let pushTimer = null;
+let dirty = false;
+let applyingRemote = false;
+
 function setSaveStatus(text){
   const el = $('#saveStatus');
   if(el) el.textContent = text;
 }
+const stamp = () => new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+
+/* ---------- shared sheet ---------- */
+const sync = {
+  rev: 0,
+  on(){ return !!SHEET_URL; },
+  async call(payload){
+    // text/plain keeps this a "simple" request, so the browser skips the
+    // CORS preflight that Apps Script cannot answer.
+    const res = await fetch(SHEET_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({token:SHEET_TOKEN}, payload)),
+      redirect:'follow'
+    });
+    return res.json();
+  },
+  load(){ return sync.call({action:'load'}); },
+  push(force){ return sync.call({action:'save', rev:sync.rev, board:state, force:!!force}); }
+};
+
 function queueSave(){
   if(!unlocked) return;
-  setSaveStatus('Saving');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => store.save(), 300);
+  if(applyingRemote) return;
+  if(sync.on()){
+    dirty = true;
+    setSaveStatus('Syncing');
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushRemote, 1500);
+  }else{
+    setSaveStatus('Saving');
+  }
 }
+
+async function pushRemote(){
+  if(!sync.on() || !unlocked) return;
+  try{
+    let res = await sync.push(false);
+    if(res && res.conflict){
+      const keepMine = await dialog({
+        title:'Someone else saved first',
+        body:'This board changed on the shared sheet while you were editing. Keep your version and overwrite theirs, or load theirs and drop your last change?',
+        ok:'Keep mine', cancel:'Load theirs'});
+      if(keepMine){
+        sync.rev = res.rev;
+        res = await sync.push(true);
+      }else{
+        sync.rev = res.rev;
+        adoptRemote(res.board);
+        setSaveStatus('Loaded the shared version');
+        return;
+      }
+    }
+    if(res && res.ok){
+      sync.rev = res.rev;
+      dirty = false;
+      setSaveStatus('Saved to the sheet ' + stamp());
+    }else{
+      setSaveStatus((res && res.error) || 'The sheet refused the save');
+    }
+  }catch(e){
+    setSaveStatus('Sheet unreachable. Saved on this device only.');
+  }
+}
+
+function adoptRemote(board){
+  if(!board || !board.tasks || !board.buckets) return;
+  applyingRemote = true;
+  state = normalize(board);
+  dirty = false;
+  render();
+  applyingRemote = false;
+}
+
+/* Pull other people's changes, but never while this person is mid-edit. */
+async function pollRemote(){
+  if(!sync.on() || !unlocked || dirty) return;
+  if(!$('#detail').hidden || !$('#dlgScrim').hidden) return;
+  try{
+    const res = await sync.load();
+    if(res && res.ok && res.board && res.rev > sync.rev){
+      sync.rev = res.rev;
+      adoptRemote(res.board);
+      setSaveStatus('Updated from the sheet ' + stamp());
+    }
+  }catch(e){ /* offline; the local cache still holds */ }
+}
+setInterval(pollRemote, 10000);
+window.addEventListener('focus', pollRemote);
+
 /* Write immediately and synchronously when the page is about to go away,
    so a reload or a closed tab never drops the last edit. */
 function flushSave(){
@@ -650,6 +798,14 @@ function flushSave(){
   const json = JSON.stringify(state);
   try{ window.localStorage.setItem(STORE_KEY, json); }catch(e){}
   try{ if(window.storage) window.storage.set(STORE_KEY, json); }catch(e){}
+  if(sync.on() && dirty){
+    clearTimeout(pushTimer);
+    try{
+      navigator.sendBeacon(SHEET_URL, new Blob(
+        [JSON.stringify({token:SHEET_TOKEN, action:'save', rev:sync.rev, board:state, force:true})],
+        {type:'text/plain;charset=utf-8'}));
+    }catch(e){}
+  }
 }
 window.addEventListener('pagehide', flushSave);
 window.addEventListener('beforeunload', flushSave);
@@ -663,6 +819,32 @@ const uid = p => p + Math.random().toString(36).slice(2,8);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const task = id => state.tasks.find(t => t.id === id);
+/* Boards saved before links and files existed are missing those arrays. */
+function normalize(board){
+  if(!board || !board.tasks) return board;
+  board.tasks.forEach(t => {
+    if(!Array.isArray(t.links))     t.links = [];
+    if(!Array.isArray(t.files))     t.files = [];
+    if(!Array.isArray(t.checklist)) t.checklist = [];
+    if(!Array.isArray(t.assignees)) t.assignees = [];
+    if(!Array.isArray(t.labels))    t.labels = [];
+  });
+  return board;
+}
+/* Only http and https are allowed through, so a pasted javascript: URL
+   cannot fire when a colleague clicks it. */
+function safeUrl(u){
+  try{
+    const p = new URL(String(u).trim());
+    return (p.protocol === 'http:' || p.protocol === 'https:') ? p.href : '';
+  }catch(e){ return ''; }
+}
+function fmtSize(n){
+  if(!n && n !== 0) return '';
+  if(n < 1024) return n + ' B';
+  if(n < 1048576) return Math.round(n/1024) + ' KB';
+  return (n/1048576).toFixed(1) + ' MB';
+}
 const member = id => state.members.find(m => m.id === id);
 const label = id => state.labels.find(l => l.id === id);
 const initials = n => n.trim().split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
@@ -802,6 +984,12 @@ function cardHTML(t){
     ? `<span class="due${dueClass(t)}">${fmtDate(t.due)}</span>` : '';
   const note = t.notes
     ? `<span class="meta-item" title="Has notes">&#9776;</span>` : '';
+  const nLinks = (t.links || []).length;
+  const nFiles = (t.files || []).length;
+  const links = nLinks
+    ? `<span class="meta-item" title="${nLinks} link${nLinks>1?'s':''}">&#128279; ${nLinks}</span>` : '';
+  const files = nFiles
+    ? `<span class="meta-item" title="${nFiles} file${nFiles>1?'s':''}">&#128206; ${nFiles}</span>` : '';
   const prio = (t.priority === 'urgent' || t.priority === 'important')
     ? `<span class="prio ${t.priority}">${t.priority === 'urgent' ? '!' : '&#8593;'} ${t.priority === 'urgent' ? 'Urgent' : 'Important'}</span>` : '';
   const people = t.assignees.map(id => {
@@ -810,7 +998,7 @@ function cardHTML(t){
   return `<article class="card${t.progress === 'completed' ? ' done' : ''}" draggable="true" data-id="${t.id}" tabindex="0">
     ${bars ? `<div class="labels">${bars}</div>` : ''}
     <p class="card-title">${esc(t.title)}</p>
-    <div class="card-meta">${progressIcon(t.progress)}${due}${checks}${note}</div>
+    <div class="card-meta">${progressIcon(t.progress)}${due}${checks}${links}${files}${note}</div>
     <div class="card-foot">${prio || '<span></span>'}<span class="avatars">${people}</span></div>
   </article>`;
 }
@@ -896,7 +1084,7 @@ function addTask(colKey){
   const t = {
     id:uid('t'), bucket:state.buckets[0] ? state.buckets[0].id : '',
     title:'New task', progress:'notstarted', priority:'medium',
-    due:'', assignees:[], labels:[], notes:'', checklist:[]
+    due:'', assignees:[], labels:[], notes:'', links:[], files:[], checklist:[]
   };
   assignColumn(t, colKey);
   state.tasks.unshift(t);
@@ -955,6 +1143,7 @@ function openDetail(id){
        style="${t.labels.includes(l.id)?`background:${l.color}`:''}">
        <span class="swatch" style="background:${l.color}"></span>${esc(l.name)}</button>`).join('');
   renderChecklist(t);
+  renderAttachments(t);
   $('#scrim').hidden = false;
   requestAnimationFrame(growTitle);
   $('#detail').hidden = false;
@@ -967,6 +1156,125 @@ function renderChecklist(t){
        <button class="x" data-del-check="${c.id}" aria-label="Remove item">&times;</button>
      </div>`).join('');
 }
+function renderAttachments(t){
+  $('#dLinks').innerHTML = t.links.map(l => {
+    const href = safeUrl(l.url);
+    if(!href) return '';
+    return `<div class="att"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6.8 9.2a2.6 2.6 0 0 0 3.7 0l2.2-2.2a2.6 2.6 0 0 0-3.7-3.7l-1 1"/><path d="M9.2 6.8a2.6 2.6 0 0 0-3.7 0L3.3 9a2.6 2.6 0 0 0 3.7 3.7l1-1"/></svg>
+      <a href="${esc(href)}" target="_blank" rel="noopener noreferrer"
+         title="${esc(href)}">${esc(l.label || href.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a>
+      <button class="x" data-del-link="${l.id}" aria-label="Remove link">&times;</button></div>`;
+  }).join('');
+
+  $('#dFiles').innerHTML = t.files.map(f => {
+    const href = safeUrl(f.url);
+    const name = esc(f.name || 'Attachment');
+    const sub  = f.kind ? esc(f.kind) : (f.size ? fmtSize(f.size) : '');
+    return `<div class="att"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.8H4.2a1 1 0 0 0-1 1v10.4a1 1 0 0 0 1 1h7.6a1 1 0 0 0 1-1V5.6z"/><path d="M9 1.8V5.6h3.8"/></svg>
+      ${href ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="${esc(href)}">${name}</a>`
+             : `<span style="flex:1">${name}</span>`}
+      <span class="att-sub">${sub}</span>
+      <button class="x" data-del-file="${f.id}" aria-label="Remove file">&times;</button></div>`;
+  }).join('');
+
+  setFileHint('');
+}
+function setFileHint(msg, warn){
+  const el = $('#fileHint');
+  el.textContent = msg || '';
+  el.classList.toggle('warn', !!warn);
+}
+
+/* ---------- file links ----------
+   Files live in OneDrive or SharePoint. The board stores a pointer, so the
+   file keeps whatever permissions you gave it there. */
+
+// OneDrive and SharePoint share links carry a type marker like /:x:/
+const OD_KIND = {w:'Word', x:'Excel', p:'PowerPoint', b:'PDF', f:'Folder',
+                 i:'Image', v:'Video', t:'Text', u:'File', o:'File'};
+
+function inspectFileLink(href){
+  try{
+    const u = new URL(href);
+    const m = u.pathname.match(/\/:([a-z]):\//i);
+    const kind = m ? (OD_KIND[m[1].toLowerCase()] || 'File') : '';
+    const last = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '');
+    const name = /\.[a-z0-9]{2,5}$/i.test(last) ? last : '';
+    const host = u.hostname.replace(/^www\./, '');
+    const cloud = /(^|\.)sharepoint\.com$|(^|\.)1drv\.ms$|onedrive\.live\.com$/i.test(host);
+    return {name, kind, host, cloud};
+  }catch(e){ return {name:'', kind:'', host:'', cloud:false}; }
+}
+
+/* ---------- uploads ---------- */
+const MAX_FILE = 8 * 1024 * 1024;   // Apps Script chokes on much more than this
+
+function readBase64(file){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(String(r.result).split(',')[1] || '');
+    r.onerror = () => rej(new Error('Could not read the file'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function uploadFiles(list){
+  if(!openId) return;
+  if(!sync.on()){
+    setFileHint('Uploading needs the shared sheet. Add your SHEET_URL, or paste a link instead.', true);
+    return;
+  }
+  const files = [...list];
+  for(let i = 0; i < files.length; i++){
+    const f   = files[i];
+    const tag = files.length > 1 ? ` (${i+1} of ${files.length})` : '';
+    if(f.size > MAX_FILE){
+      setFileHint(`${f.name} is ${fmtSize(f.size)}. Anything over 8 MB should live in Drive with a link here instead.`, true);
+      continue;
+    }
+    setFileHint(`Uploading ${f.name}${tag}`);
+    try{
+      const data = await readBase64(f);
+      const res  = await sync.call({action:'upload', name:f.name,
+                                    mime:f.type || 'application/octet-stream', data});
+      if(res && res.ok){
+        // driveId marks this as ours to clean up when it is removed
+        edit(t => t.files.push({id:uid('f'), driveId:res.id, name:res.name,
+                                size:res.size, mime:res.mime, url:res.url}));
+        renderAttachments(task(openId));
+        setFileHint('');
+      }else{
+        setFileHint((res && res.error) || 'The upload was refused.', true);
+      }
+    }catch(e){
+      setFileHint('Upload failed. Check the connection and try again.', true);
+    }
+  }
+}
+
+function addFileFromInputs(rawInput){
+  if(!openId) return;
+  const raw = (rawInput !== undefined ? rawInput : $('#fileUrl').value).trim();
+  if(!raw) return;
+  const href = safeUrl(/^[a-z]+:\/\//i.test(raw) ? raw : 'https://' + raw);
+  if(!href){
+    setFileHint('That does not look like a web address.', true);
+    return;
+  }
+  const info = inspectFileLink(href);
+  const typed = $('#fileName').value.trim();
+  const name  = typed || info.name || (info.kind ? info.kind + ' file' : info.host);
+
+  let kind = info.kind || (info.cloud ? 'OneDrive' : info.host);
+  if(kind === name) kind = '';   // no point repeating the name as its own label
+  edit(t => t.files.push({id:uid('f'), name, url:href, kind}));
+  $('#fileUrl').value = '';
+  $('#fileName').value = '';
+  renderAttachments(task(openId));
+  setFileHint('');
+  $('#fileUrl').focus();
+}
+
 function closeDetail(){
   openId = null;
   $('#scrim').hidden = true;
@@ -1084,7 +1392,7 @@ function importJSON(file){
     try{
       const data = JSON.parse(r.result);
       if(!data.tasks || !data.buckets) throw new Error('shape');
-      state = data;
+      state = normalize(data);
       render();
     }catch(e){
       dialog({title:'That file did not load',
@@ -1106,6 +1414,7 @@ function dialog(opts){
   $('#dlgOk').textContent = opts.ok || 'OK';
   $('#dlgOk').classList.toggle('btn-danger', !!opts.danger);
   $('#dlgOk').classList.toggle('btn-primary', !opts.danger);
+  $('#dlgCancel').textContent = opts.cancel || 'Cancel';
   $('#dlgCancel').hidden = !!opts.noCancel;
   $('#dlgScrim').hidden = false;
   const first = $('#dlgExtra').querySelector('input');
@@ -1223,6 +1532,85 @@ $('#dChecklist').addEventListener('click', e => {
   edit(t => t.checklist = t.checklist.filter(c => c.id !== btn.dataset.delCheck));
   renderChecklist(task(openId));
 });
+/* ---------- links ---------- */
+function addLinkFromInputs(){
+  const raw  = $('#linkUrl').value.trim();
+  if(!raw) return;
+  const href = safeUrl(raw.match(/^[a-z]+:\/\//i) ? raw : 'https://' + raw);
+  if(!href){
+    setFileHint('That does not look like a web address.', true);
+    return;
+  }
+  const label = $('#linkLabel').value.trim();
+  edit(t => t.links.push({id:uid('k'), url:href, label:label}));
+  $('#linkUrl').value = '';
+  $('#linkLabel').value = '';
+  renderAttachments(task(openId));
+  $('#linkUrl').focus();
+}
+$('#addLink').addEventListener('click', addLinkFromInputs);
+['#linkUrl','#linkLabel'].forEach(sel =>
+  $(sel).addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addLinkFromInputs(); } }));
+$('#dLinks').addEventListener('click', e => {
+  const btn = e.target.closest('[data-del-link]');
+  if(!btn) return;
+  edit(t => t.links = t.links.filter(l => l.id !== btn.dataset.delLink));
+  renderAttachments(task(openId));
+});
+
+/* ---------- files ---------- */
+$('#pickFile').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', e => {
+  if(e.target.files.length) uploadFiles(e.target.files);
+  e.target.value = '';
+});
+
+$('#addFile').addEventListener('click', () => addFileFromInputs());
+['#fileUrl','#fileName'].forEach(sel =>
+  $(sel).addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addFileFromInputs(); } }));
+
+// Guess a name as soon as a link is pasted, so the field is rarely blank.
+$('#fileUrl').addEventListener('input', () => {
+  if($('#fileName').value.trim()) return;
+  const href = safeUrl($('#fileUrl').value.trim());
+  if(!href) return;
+  const info = inspectFileLink(href);
+  $('#fileName').value = info.name || (info.kind ? info.kind + ' file' : '');
+});
+
+// The box takes both: real files get uploaded, a dragged tab becomes a link.
+const dropZone = $('#drop');   // note: drop() is the card drag handler
+['dragenter','dragover'].forEach(ev =>
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('over'); }));
+['dragleave','drop'].forEach(ev =>
+  dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('over'); }));
+dropZone.addEventListener('drop', e => {
+  const dt = e.dataTransfer;
+  if(!dt) return;
+  if(dt.files && dt.files.length){ uploadFiles(dt.files); return; }
+  const url = dt.getData('text/uri-list') || dt.getData('text/plain');
+  if(url) addFileFromInputs(url);
+});
+
+$('#dFiles').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-del-file]');
+  if(!btn) return;
+  const id = btn.dataset.delFile;
+  const f  = task(openId).files.find(x => x.id === id);
+  const go = await dialog({
+    title:'Remove this file?',
+    body:(f && f.driveId)
+      ? (f.name + ' moves to the Drive trash and comes off this task.')
+      : ((f ? f.name + ' ' : '') + 'comes off the task. The file itself stays where it lives.'),
+    ok:'Remove', danger:true});
+  if(!go) return;
+  edit(t => t.files = t.files.filter(x => x.id !== id));
+  renderAttachments(task(openId));
+  if(f && f.driveId){
+    try{ await sync.call({action:'deletefile', id:f.driveId}); }catch(err){}
+  }
+});
+
 $('#dDelete').addEventListener('click', async () => {
   const go = await dialog({title:'Delete this task?', body:task(openId) ? task(openId).title : '',
     ok:'Delete task', danger:true});
@@ -1236,10 +1624,34 @@ async function unlock(remember){
   unlocked = true;
   $('#gate').hidden = true;
   if(remember) await store.put(UNLOCK_KEY, PASS_HASH);
-  const saved = await store.load();
-  if(saved && saved.tasks && saved.buckets) state = saved;
+
+  // Local cache first so the board paints straight away.
+  applyingRemote = true;
+  const cached = await store.load();
+  if(cached && cached.tasks && cached.buckets) state = normalize(cached);
   render();
-  setSaveStatus('');
+  applyingRemote = false;
+
+  if(!sync.on()){
+    setSaveStatus('');
+    return;
+  }
+
+  setSaveStatus('Opening the shared sheet');
+  try{
+    const res = await sync.load();
+    if(!res || !res.ok) throw new Error(res && res.error);
+    sync.rev = res.rev;
+    if(res.board && res.board.tasks){
+      adoptRemote(res.board);
+      setSaveStatus('Opened from the sheet ' + stamp());
+    }else{
+      // First run: the sheet is empty, so seed it with what we have.
+      await pushRemote();
+    }
+  }catch(e){
+    setSaveStatus('Sheet unreachable. Working from this device only.');
+  }
 }
 async function tryPassword(){
   const input = $('#gatePass');
