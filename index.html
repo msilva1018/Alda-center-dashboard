@@ -67,6 +67,7 @@ input,select,textarea{font:inherit;color:inherit}
 .btn-quiet:hover{background:#F0EDEB;color:var(--ink)}
 .team{display:flex}
 .team .avatar{margin-left:-6px;border:2px solid #fff}
+.team .team-more{background:#E4E1DE;color:var(--muted);font-size:10px}
 
 /* ---------- board header ---------- */
 .header{padding:18px 24px 0;flex:none;background:var(--canvas)}
@@ -270,6 +271,7 @@ select.ctl-select{
   display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;
 }
 .drop.over{border-color:var(--crimson);background:var(--crimson-wash);color:var(--crimson-deep)}
+.drop + .add-row{margin-top:8px}
 .hint{font-size:12px;color:var(--faint);margin:7px 0 0;min-height:17px}
 .hint.warn{color:var(--crimson)}
 
@@ -479,11 +481,11 @@ select.ctl-select{
    ========================================================================= */
 
 /* -------------------------------------------------------------------------
-   SETTINGS — edit these two lines to change the password.
-   The password is stored as a SHA-256 hash so it is not readable in this
-   file. To set a new one, open the board and use the Password button; it
-   gives you the exact line to paste back in here.
-   Current password: alda2026
+   SETTINGS — the password is stored as a SHA-256 hash so it is not
+   readable in this file, which is public. To set a new one, open the board
+   and use the Password button; it gives you the exact line to paste back in
+   here. Locked out? Replace PASS_HASH with the SHA-256 of any new password;
+   any SHA-256 generator will make it.
    ------------------------------------------------------------------------- */
 const PASS_HASH = '517bae5866e846bf62866e8c42ad34f77588f52ca31999f97e3cde033f5ec62d';
 
@@ -494,6 +496,26 @@ const PASS_HASH = '517bae5866e846bf62866e8c42ad34f77588f52ca31999f97e3cde033f5ec
    ------------------------------------------------------------------------- */
 const SHEET_URL   = 'https://script.google.com/macros/s/AKfycbzz8t_inOOycQN_bOhK8_xhheHphmNX3HdCb8MdK_9hMEOdc2MO2WkIAInu_-P84msmdw/exec';
 const SHEET_TOKEN = 'alda-NJNKals4zJMjXJxC-xA7lslx';
+
+/* -------------------------------------------------------------------------
+   TEAM — the people who can be assigned to tasks. This list is the single
+   source of truth: it replaces whatever list is saved on the board each time
+   the board loads, so editing it here updates everyone.
+   Keep each id the same if you fix a name's spelling. Changing or removing
+   an id removes that person's assignments.
+   ------------------------------------------------------------------------- */
+const TEAM = [
+  {id:'ecriscione',  name:'Emanuele Criscione', color:'#8D2138'},
+  {id:'pmoloney',    name:'Patrick Moloney',    color:'#3D5A80'},
+  {id:'rramirez',    name:'Rachel Ramirez',     color:'#4F6B4A'},
+  {id:'dcriscione',  name:'Dawn Criscione',     color:'#5B4B8A'},
+  {id:'llindenfeld', name:'Laura Lindenfeld',   color:'#2F6B6B'},
+  {id:'lsentochnik', name:'Leeann Sentochnik',  color:'#9A5B13'},
+  {id:'bhoffman',    name:'Brenda Hoffman',     color:'#6B3D5E'},
+  {id:'msilva',      name:'Matthew Silva',      color:'#5A5A5F'},
+  {id:'dbrennan',    name:'Dina Brennan',       color:'#7D6A1E'},
+  {id:'nleavey',     name:'Nicole Leavey',      color:'#7A3E2E'}
+];
 
 const STORE_KEY  = 'alda-board-v1';
 const UNLOCK_KEY = 'alda-board-unlock-v1';
@@ -564,13 +586,7 @@ function seed(){
       {id:'b3', name:'Scheduled'},
       {id:'b4', name:'Delivered'}
     ],
-    members:[
-      {id:'m1', name:'Alex Rivera',  color:'#8D2138'},
-      {id:'m2', name:'Maya Chen',    color:'#3D5A80'},
-      {id:'m3', name:'Dele Okafor',  color:'#4F6B4A'},
-      {id:'m4', name:'Sana Patel',   color:'#5B4B8A'},
-      {id:'m5', name:'Jack Brennan', color:'#2F6B6B'}
-    ],
+    members: TEAM.map(m => ({...m})),
     labels:[
       {id:'l1', name:'Workshops',    color:'#3D5A80'},
       {id:'l2', name:'Courses',      color:'#4F6B4A'},
@@ -581,58 +597,58 @@ function seed(){
     ],
     tasks:[
       {id:'t1', bucket:'b1', title:'Scope a two-day improv intensive for the medical school',
-       progress:'notstarted', priority:'important', due:day(9), assignees:['m1'], labels:['l1','l5'],
+       progress:'notstarted', priority:'important', due:day(9), assignees:[], labels:['l1','l5'],
        notes:'Sample text. Replace with the real request details.', links:[], files:[], checklist:[
          {id:'c1', text:'Confirm cohort size', done:false},
          {id:'c2', text:'Share draft budget', done:false}]},
       {id:'t2', bucket:'b1', title:'Reply to the state museum about a summer speaker series',
-       progress:'notstarted', priority:'medium', due:day(4), assignees:['m3'], labels:['l3'],
+       progress:'notstarted', priority:'medium', due:day(4), assignees:[], labels:['l3'],
        notes:'', links:[], files:[], checklist:[]},
       {id:'t3', bucket:'b1', title:'Price out a distance-learning version of Distilling Your Message',
        progress:'notstarted', priority:'low', due:'', assignees:[], labels:['l2'],
        notes:'', links:[], files:[], checklist:[]},
 
       {id:'t4', bucket:'b2', title:'Draft the agenda for the NIH grantee communication bootcamp',
-       progress:'inprogress', priority:'urgent', due:day(2), assignees:['m2','m4'], labels:['l1','l4'],
+       progress:'inprogress', priority:'urgent', due:day(2), assignees:[], labels:['l1','l4'],
        notes:'Sample text. Outline sessions, timings and facilitator assignments.', links:[], files:[], checklist:[
          {id:'c3', text:'Day one running order', done:true},
          {id:'c4', text:'Day two running order', done:false},
          {id:'c5', text:'Send to program officer', done:false}]},
       {id:'t5', bucket:'b2', title:'Rebuild the participant evaluation survey',
-       progress:'inprogress', priority:'important', due:day(6), assignees:['m4'], labels:['l2','l6'],
+       progress:'inprogress', priority:'important', due:day(6), assignees:[], labels:['l2','l6'],
        notes:'', links:[], files:[], checklist:[{id:'c6', text:'Pull last cycle questions', done:true},
                             {id:'c7', text:'Cut to twelve items', done:false}]},
       {id:'t6', bucket:'b2', title:'Edit the alumni panel recording into three short clips',
-       progress:'inprogress', priority:'medium', due:day(-2), assignees:['m5'], labels:['l6'],
+       progress:'inprogress', priority:'medium', due:day(-2), assignees:[], labels:['l6'],
        notes:'', links:[], files:[], checklist:[]},
       {id:'t7', bucket:'b2', title:'Write the renewal case for the hospital partnership',
-       progress:'notstarted', priority:'important', due:day(13), assignees:['m1','m2'], labels:['l5','l4'],
+       progress:'notstarted', priority:'important', due:day(13), assignees:[], labels:['l5','l4'],
        notes:'', links:[], files:[], checklist:[]},
 
       {id:'t8', bucket:'b3', title:'Confirm room and AV for the February workshop weekend',
-       progress:'inprogress', priority:'urgent', due:day(-1), assignees:['m3'], labels:['l1'],
+       progress:'inprogress', priority:'urgent', due:day(-1), assignees:[], labels:['l1'],
        notes:'Sample text. Waiting on the campus events office.', links:[], files:[], checklist:[
          {id:'c8', text:'Hold both studios', done:true},
          {id:'c9', text:'Confirm mic package', done:false}]},
       {id:'t9', bucket:'b3', title:'Recruit twelve graduate students for the spring cohort',
-       progress:'inprogress', priority:'important', due:day(7), assignees:['m4','m5'], labels:['l2','l6'],
+       progress:'inprogress', priority:'important', due:day(7), assignees:[], labels:['l2','l6'],
        notes:'',
        links:[{id:'k1', url:'https://www.aldacenter.org', label:'Alda Center site'}],
        files:[],
        checklist:[{id:'c10', text:'Post to department lists', done:true},
                             {id:'c11', text:'Follow up with advisors', done:false}]},
       {id:'t10', bucket:'b3', title:'Book travel for the Chicago partner site visit',
-       progress:'notstarted', priority:'medium', due:day(16), assignees:['m1'], labels:['l5'],
+       progress:'notstarted', priority:'medium', due:day(16), assignees:[], labels:['l5'],
        notes:'', links:[], files:[], checklist:[]},
 
       {id:'t11', bucket:'b4', title:'Run the December media training for the physics department',
-       progress:'completed', priority:'medium', due:day(-12), assignees:['m2','m3'], labels:['l1'],
+       progress:'completed', priority:'medium', due:day(-12), assignees:[], labels:['l1'],
        notes:'', links:[], files:[], checklist:[]},
       {id:'t12', bucket:'b4', title:'Publish the storytelling showcase recap',
-       progress:'completed', priority:'low', due:day(-6), assignees:['m5'], labels:['l6','l3'],
+       progress:'completed', priority:'low', due:day(-6), assignees:[], labels:['l6','l3'],
        notes:'', links:[], files:[], checklist:[]},
       {id:'t13', bucket:'b4', title:'Close out the fall outreach grant report',
-       progress:'completed', priority:'important', due:day(-4), assignees:['m4'], labels:['l4'],
+       progress:'completed', priority:'important', due:day(-4), assignees:[], labels:['l4'],
        notes:'', links:[], files:[], checklist:[]}
     ]
   };
@@ -892,10 +908,15 @@ function normalize(board){
 
   board.title   = str(board.title) || 'Untitled board';
   board.buckets = arr(board.buckets).map(b => ({id:cleanId(b.id), name:str(b.name)}));
-  board.members = arr(board.members).map(m => ({id:cleanId(m.id), name:str(m.name) || 'Member',
-                                                color:cleanColor(m.color, '#6B6462')}));
+  board.members = TEAM.map(m => ({id:cleanId(m.id), name:str(m.name) || 'Member',
+                                  color:cleanColor(m.color, '#6B6462')}));
   board.labels  = arr(board.labels).map(l => ({id:cleanId(l.id), name:str(l.name) || 'Label',
                                                color:cleanColor(l.color, '#5A5A5F')}));
+
+  // A reference to someone or something no longer on the board would hide
+  // the task when grouping by person or label, so drop it.
+  const memberIds = new Set(board.members.map(m => m.id));
+  const labelIds  = new Set(board.labels.map(l => l.id));
 
   board.tasks = board.tasks.map(t => ({
     id:        cleanId(t.id),
@@ -904,8 +925,8 @@ function normalize(board){
     progress:  PROGRESS_IDS.includes(t.progress) ? t.progress : 'notstarted',
     priority:  PRIORITY_IDS.includes(t.priority) ? t.priority : 'medium',
     due:       /^\d{4}-\d{2}-\d{2}$/.test(str(t.due)) ? t.due : '',
-    assignees: arr(t.assignees).map(cleanRef).filter(Boolean),
-    labels:    arr(t.labels).map(cleanRef).filter(Boolean),
+    assignees: arr(t.assignees).map(cleanRef).filter(id => memberIds.has(id)),
+    labels:    arr(t.labels).map(cleanRef).filter(id => labelIds.has(id)),
     notes:     str(t.notes),
     checklist: arr(t.checklist).map(c => ({id:cleanId(c.id), text:str(c.text), done:!!c.done})),
     links:     arr(t.links).map(l => ({id:cleanId(l.id), url:str(l.url), label:str(l.label)})),
@@ -1026,7 +1047,10 @@ function render(){
 }
 
 function renderTeam(){
-  $('#team').innerHTML = state.members.slice(0,5).map(m => avatar(m)).join('');
+  const shown = state.members.slice(0, 5);
+  const more  = state.members.length - shown.length;
+  $('#team').innerHTML = shown.map(m => avatar(m)).join('') +
+    (more > 0 ? `<span class="avatar team-more" title="${esc(state.members.slice(5).map(m => m.name).join(', '))}">+${more}</span>` : '');
 }
 
 function renderStats(){
