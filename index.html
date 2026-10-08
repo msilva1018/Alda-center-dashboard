@@ -201,7 +201,7 @@ select.ctl-select{
 .scrim{position:fixed;inset:0;background:rgba(30,28,29,.32);z-index:80}
 .scrim[hidden],.detail[hidden]{display:none}
 .detail{
-  position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);z-index:90;
+  position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);z-index:90;
   background:var(--surface);box-shadow:var(--shadow-panel);
   display:flex;flex-direction:column;
 }
@@ -224,6 +224,8 @@ select.ctl-select{
   padding:7px 9px;background:#FBFAF9;font-family:var(--sans);
 }
 .field textarea{min-height:88px;resize:vertical;line-height:1.5}
+/* Notes grow to fit, so the whole thing reads without an inner scrollbar. */
+#dNotes{min-height:140px;resize:none;overflow:hidden}
 .field select:focus,.field input:focus,.field textarea:focus{outline:none;border-color:var(--crimson);background:#fff}
 .two-up{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .toggle-row{display:flex;flex-wrap:wrap;gap:6px}
@@ -241,6 +243,8 @@ select.ctl-select{
 .check-item input[type=text]{flex:1;border:none;background:none;padding:2px 4px;border-radius:3px}
 .check-item input[type=text]:focus{outline:none;background:#fff;box-shadow:0 0 0 1px var(--line)}
 .check-item.done input[type=text]{color:var(--faint);text-decoration:line-through}
+.check-item.sub{margin-left:22px;padding-left:10px;border-left:2px solid var(--line-soft);border-radius:0 4px 4px 0}
+.check-item .indent{font-size:13px;padding:2px 5px}
 .x{border:none;background:none;color:var(--faint);padding:2px 6px;border-radius:4px;line-height:1}
 .x:hover{color:var(--crimson);background:var(--crimson-wash)}
 .detail-foot{border-top:1px solid var(--line-soft);padding:12px 18px;display:flex;justify-content:space-between}
@@ -398,7 +402,6 @@ select.ctl-select{
     <input type="file" id="importFile" accept="application/json,.json" class="sr">
     <button class="btn-quiet" id="passBtn" title="Change the team password">Password</button>
     <button class="btn-quiet" id="lockBtn" title="Sign out on this device">Lock</button>
-    <button class="btn-quiet" id="resetBtn" title="Restore the sample content">Reset</button>
   </div>
 </div>
 
@@ -428,6 +431,12 @@ select.ctl-select{
       <div class="toggle-row" id="dAssignees"></div></div>
     <div class="field"><label>Labels</label>
       <div class="toggle-row" id="dLabels"></div></div>
+    <div class="field"><label for="dNotes">Notes</label>
+      <textarea id="dNotes" placeholder="Add context, background, or next steps"></textarea></div>
+    <div class="field"><label>Checklist</label>
+      <div class="check-list" id="dChecklist"></div>
+      <button class="btn" id="dAddCheck">Add an item</button>
+      <p class="hint">Enter adds the next item. Tab makes it a sub-item, Shift+Tab moves it back out.</p></div>
     <div class="field"><label>Links</label>
       <div class="att-list" id="dLinks"></div>
       <div class="add-row">
@@ -448,11 +457,6 @@ select.ctl-select{
         <button class="btn" id="addFile">Add</button>
       </div>
       <p class="hint" id="fileHint"></p></div>
-    <div class="field"><label for="dNotes">Notes</label>
-      <textarea id="dNotes" placeholder="Add context or next steps"></textarea></div>
-    <div class="field"><label>Checklist</label>
-      <div class="check-list" id="dChecklist"></div>
-      <button class="btn" id="dAddCheck">Add an item</button></div>
   </div>
   <div class="detail-foot">
     <button class="btn btn-danger" id="dDelete">Delete task</button>
@@ -579,13 +583,8 @@ function day(offset){
 
 function seed(){
   return {
-    title:'Spring program board',
-    buckets:[
-      {id:'b1', name:'Incoming requests'},
-      {id:'b2', name:'In development'},
-      {id:'b3', name:'Scheduled'},
-      {id:'b4', name:'Delivered'}
-    ],
+    title:'Program board',
+    buckets:[{id:'b1', name:'To do'}],
     members: TEAM.map(m => ({...m})),
     labels:[
       {id:'l1', name:'Workshops',    color:'#3D5A80'},
@@ -595,66 +594,10 @@ function seed(){
       {id:'l5', name:'Partnerships', color:'#2F6B6B'},
       {id:'l6', name:'Comms',        color:'#5A5A5F'}
     ],
-    tasks:[
-      {id:'t1', bucket:'b1', title:'Scope a two-day improv intensive for the medical school',
-       progress:'notstarted', priority:'important', due:day(9), assignees:[], labels:['l1','l5'],
-       notes:'Sample text. Replace with the real request details.', links:[], files:[], checklist:[
-         {id:'c1', text:'Confirm cohort size', done:false},
-         {id:'c2', text:'Share draft budget', done:false}]},
-      {id:'t2', bucket:'b1', title:'Reply to the state museum about a summer speaker series',
-       progress:'notstarted', priority:'medium', due:day(4), assignees:[], labels:['l3'],
-       notes:'', links:[], files:[], checklist:[]},
-      {id:'t3', bucket:'b1', title:'Price out a distance-learning version of Distilling Your Message',
-       progress:'notstarted', priority:'low', due:'', assignees:[], labels:['l2'],
-       notes:'', links:[], files:[], checklist:[]},
-
-      {id:'t4', bucket:'b2', title:'Draft the agenda for the NIH grantee communication bootcamp',
-       progress:'inprogress', priority:'urgent', due:day(2), assignees:[], labels:['l1','l4'],
-       notes:'Sample text. Outline sessions, timings and facilitator assignments.', links:[], files:[], checklist:[
-         {id:'c3', text:'Day one running order', done:true},
-         {id:'c4', text:'Day two running order', done:false},
-         {id:'c5', text:'Send to program officer', done:false}]},
-      {id:'t5', bucket:'b2', title:'Rebuild the participant evaluation survey',
-       progress:'inprogress', priority:'important', due:day(6), assignees:[], labels:['l2','l6'],
-       notes:'', links:[], files:[], checklist:[{id:'c6', text:'Pull last cycle questions', done:true},
-                            {id:'c7', text:'Cut to twelve items', done:false}]},
-      {id:'t6', bucket:'b2', title:'Edit the alumni panel recording into three short clips',
-       progress:'inprogress', priority:'medium', due:day(-2), assignees:[], labels:['l6'],
-       notes:'', links:[], files:[], checklist:[]},
-      {id:'t7', bucket:'b2', title:'Write the renewal case for the hospital partnership',
-       progress:'notstarted', priority:'important', due:day(13), assignees:[], labels:['l5','l4'],
-       notes:'', links:[], files:[], checklist:[]},
-
-      {id:'t8', bucket:'b3', title:'Confirm room and AV for the February workshop weekend',
-       progress:'inprogress', priority:'urgent', due:day(-1), assignees:[], labels:['l1'],
-       notes:'Sample text. Waiting on the campus events office.', links:[], files:[], checklist:[
-         {id:'c8', text:'Hold both studios', done:true},
-         {id:'c9', text:'Confirm mic package', done:false}]},
-      {id:'t9', bucket:'b3', title:'Recruit twelve graduate students for the spring cohort',
-       progress:'inprogress', priority:'important', due:day(7), assignees:[], labels:['l2','l6'],
-       notes:'',
-       links:[{id:'k1', url:'https://www.aldacenter.org', label:'Alda Center site'}],
-       files:[],
-       checklist:[{id:'c10', text:'Post to department lists', done:true},
-                            {id:'c11', text:'Follow up with advisors', done:false}]},
-      {id:'t10', bucket:'b3', title:'Book travel for the Chicago partner site visit',
-       progress:'notstarted', priority:'medium', due:day(16), assignees:[], labels:['l5'],
-       notes:'', links:[], files:[], checklist:[]},
-
-      {id:'t11', bucket:'b4', title:'Run the December media training for the physics department',
-       progress:'completed', priority:'medium', due:day(-12), assignees:[], labels:['l1'],
-       notes:'', links:[], files:[], checklist:[]},
-      {id:'t12', bucket:'b4', title:'Publish the storytelling showcase recap',
-       progress:'completed', priority:'low', due:day(-6), assignees:[], labels:['l6','l3'],
-       notes:'', links:[], files:[], checklist:[]},
-      {id:'t13', bucket:'b4', title:'Close out the fall outreach grant report',
-       progress:'completed', priority:'important', due:day(-4), assignees:[], labels:['l4'],
-       notes:'', links:[], files:[], checklist:[]}
-    ]
+    tasks:[]
   };
 }
 
-/* ---------- state ---------- */
 let state = seed();
 let view = 'board';
 let groupBy = 'bucket';
@@ -800,7 +743,10 @@ async function pushRemote(){
     setSaveStatus('Sheet unreachable. Saved on this device only.');
   }finally{
     pushing = false;
-    if(dirty && editSeq !== sentSeq) pushTimer = setTimeout(pushRemote, 300);
+    if(dirty && editSeq !== sentSeq){
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(pushRemote, 300);
+    }
   }
 }
 
@@ -928,7 +874,8 @@ function normalize(board){
     assignees: arr(t.assignees).map(cleanRef).filter(id => memberIds.has(id)),
     labels:    arr(t.labels).map(cleanRef).filter(id => labelIds.has(id)),
     notes:     str(t.notes),
-    checklist: arr(t.checklist).map(c => ({id:cleanId(c.id), text:str(c.text), done:!!c.done})),
+    checklist: fixLevels(arr(t.checklist).map(c => ({id:cleanId(c.id), text:str(c.text), done:!!c.done,
+                                                     level:c.level === 1 ? 1 : 0}))),
     links:     arr(t.links).map(l => ({id:cleanId(l.id), url:str(l.url), label:str(l.label)})),
     files:     arr(t.files).map(f => {
       const o = {id:cleanId(f.id), name:str(f.name) || 'Attachment', url:str(f.url), kind:str(f.kind)};
@@ -1283,16 +1230,36 @@ function openDetail(id){
   renderChecklist(t);
   renderAttachments(t);
   $('#scrim').hidden = false;
-  requestAnimationFrame(growTitle);
+  requestAnimationFrame(() => { growTitle(); growNotes(); });
   $('#detail').hidden = false;
 }
+/* Checklist items are one flat list; level 1 means "sub-item of the nearest
+   level 0 item above". The only rule needed to keep that valid is that the
+   first item is never nested. */
+function fixLevels(list){
+  if(list.length && list[0].level) list[0].level = 0;
+  return list;
+}
+function hasChildren(list, i){
+  return list[i].level === 0 && i + 1 < list.length && list[i + 1].level === 1;
+}
 function renderChecklist(t){
-  $('#dChecklist').innerHTML = t.checklist.map(c =>
-    `<div class="check-item${c.done?' done':''}" data-check="${c.id}">
+  fixLevels(t.checklist);
+  $('#dChecklist').innerHTML = t.checklist.map((c, i) => {
+    const sub = c.level === 1;
+    const canIndent = !sub && i > 0;
+    const arrow = sub
+      ? `<button class="x indent" data-outdent="${c.id}" title="Move out a level" aria-label="Move out a level">&larr;</button>`
+      : canIndent
+        ? `<button class="x indent" data-indent="${c.id}" title="Make this a sub-item" aria-label="Make this a sub-item">&rarr;</button>`
+        : '';
+    return `<div class="check-item${c.done?' done':''}${sub?' sub':''}" data-check="${c.id}">
        <input type="checkbox"${c.done?' checked':''} aria-label="Mark done">
-       <input type="text" value="${esc(c.text)}" aria-label="Checklist item">
+       <input type="text" value="${esc(c.text)}" aria-label="${sub ? 'Checklist sub-item' : 'Checklist item'}">
+       ${arrow}
        <button class="x" data-del-check="${c.id}" aria-label="Remove item">&times;</button>
-     </div>`).join('');
+     </div>`;
+  }).join('');
 }
 function renderAttachments(t){
   $('#dLinks').innerHTML = t.links.map(l => {
@@ -1609,16 +1576,6 @@ $('#importFile').addEventListener('change', e => {
   if(e.target.files[0]) importJSON(e.target.files[0]);
   e.target.value = '';
 });
-$('#resetBtn').addEventListener('click', async () => {
-  const go = await dialog({title:'Reset the board?',
-    body:'Everything on the board is replaced with the sample content. This cannot be undone.',
-    ok:'Reset board', danger:true});
-  if(!go) return;
-  await store.clear();
-  state = seed();
-  render();
-});
-
 $('#dClose').addEventListener('click', closeDetail);
 $('#dDone').addEventListener('click', closeDetail);
 $('#scrim').addEventListener('click', closeDetail);
@@ -1629,6 +1586,13 @@ document.addEventListener('keydown', e => {
     else if(!$('#filterPop').hidden) toggleFilter();
   }
 });
+function growNotes(){
+  const el = $('#dNotes');
+  if($('#detail').hidden) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(140, el.scrollHeight + 2) + 'px';
+}
+window.addEventListener('resize', growNotes);
 function growTitle(){
   const el = $('#dTitle');
   el.style.height = 'auto';
@@ -1639,7 +1603,7 @@ $('#dBucket').addEventListener('change', e => edit(t => t.bucket = e.target.valu
 $('#dProgress').addEventListener('change', e => edit(t => t.progress = e.target.value));
 $('#dPriority').addEventListener('change', e => edit(t => t.priority = e.target.value));
 $('#dDue').addEventListener('change', e => edit(t => t.due = e.target.value));
-$('#dNotes').addEventListener('input', e => edit(t => t.notes = e.target.value));
+$('#dNotes').addEventListener('input', e => { growNotes(); edit(t => t.notes = e.target.value); });
 $('#dAssignees').addEventListener('click', e => {
   const btn = e.target.closest('[data-member]');
   if(!btn) return;
@@ -1658,28 +1622,118 @@ $('#dLabels').addEventListener('click', e => {
   });
   openDetail(openId);
 });
-$('#dAddCheck').addEventListener('click', () => {
-  edit(t => t.checklist.push({id:uid('c'), text:'', done:false}));
+function focusCheck(id, caret){
+  const row = $('#dChecklist').querySelector(`[data-check="${id}"]`);
+  if(!row) return;
+  const inp = row.querySelector('input[type=text]');
+  inp.focus();
+  const pos = caret == null ? inp.value.length : Math.min(caret, inp.value.length);
+  inp.setSelectionRange(pos, pos);
+}
+function checklistOp(fn, focusId, caret){
+  edit(t => { fn(t.checklist); fixLevels(t.checklist); });
   renderChecklist(task(openId));
-  const inputs = $('#dChecklist').querySelectorAll('input[type=text]');
-  if(inputs.length) inputs[inputs.length - 1].focus();
+  if(focusId) focusCheck(focusId, caret);
+}
+function indentItem(list, i){
+  if(i > 0 && list[i].level === 0) list[i].level = 1;
+}
+function outdentItem(list, i){
+  if(list[i].level === 1) list[i].level = 0;
+}
+
+$('#dAddCheck').addEventListener('click', () => {
+  const id = uid('c');
+  checklistOp(list => list.push({id, text:'', done:false, level:0}), id);
 });
-$('#dChecklist').addEventListener('change', e => {
+
+// Text saves as it is typed, so restructuring never loses a word.
+$('#dChecklist').addEventListener('input', e => {
+  if(e.target.type !== 'text') return;
   const row = e.target.closest('[data-check]');
   if(!row) return;
   edit(t => {
     const c = t.checklist.find(x => x.id === row.dataset.check);
-    if(!c) return;
-    if(e.target.type === 'checkbox') c.done = e.target.checked;
-    else c.text = e.target.value;
+    if(c) c.text = e.target.value;
   });
-  if(e.target.type === 'checkbox') renderChecklist(task(openId));
 });
-$('#dChecklist').addEventListener('click', e => {
-  const btn = e.target.closest('[data-del-check]');
-  if(!btn) return;
-  edit(t => t.checklist = t.checklist.filter(c => c.id !== btn.dataset.delCheck));
+$('#dChecklist').addEventListener('change', e => {
+  if(e.target.type !== 'checkbox') return;
+  const row = e.target.closest('[data-check]');
+  if(!row) return;
+  edit(t => {
+    const c = t.checklist.find(x => x.id === row.dataset.check);
+    if(c) c.done = e.target.checked;
+  });
   renderChecklist(task(openId));
+});
+
+$('#dChecklist').addEventListener('keydown', e => {
+  if(e.target.type !== 'text') return;
+  const row = e.target.closest('[data-check]');
+  if(!row) return;
+  const t = task(openId);
+  const i = t.checklist.findIndex(x => x.id === row.dataset.check);
+  if(i < 0) return;
+  const item = t.checklist[i];
+  const caret = e.target.selectionStart;
+
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    // New item at the same level. Under a parent, it goes after that
+    // parent's sub-items so they stay where they are.
+    let at = i + 1;
+    if(hasChildren(t.checklist, i)) while(at < t.checklist.length && t.checklist[at].level === 1) at++;
+    const id = uid('c');
+    checklistOp(list => list.splice(at, 0, {id, text:'', done:false, level:item.level}), id);
+    return;
+  }
+  // Tab and Shift+Tab only take over when they change something, so
+  // keyboard users can still tab through and out of the list.
+  if(e.key === 'Tab' && !e.shiftKey && item.level === 0 && i > 0){
+    e.preventDefault();
+    checklistOp(list => indentItem(list, i), item.id, caret);
+    return;
+  }
+  if(e.key === 'Tab' && e.shiftKey && item.level === 1){
+    e.preventDefault();
+    checklistOp(list => outdentItem(list, i), item.id, caret);
+    return;
+  }
+  if(e.key === 'Backspace' && e.target.value === ''){
+    if(item.level === 1){
+      e.preventDefault();
+      checklistOp(list => outdentItem(list, i), item.id, 0);
+    }else if(!hasChildren(t.checklist, i) && i > 0){
+      e.preventDefault();
+      const prev = t.checklist[i - 1].id;
+      checklistOp(list => list.splice(i, 1), prev);
+    }
+  }
+});
+
+$('#dChecklist').addEventListener('click', e => {
+  const t = task(openId);
+  if(!t) return;
+  const ind = e.target.closest('[data-indent]');
+  const out = e.target.closest('[data-outdent]');
+  const del = e.target.closest('[data-del-check]');
+  if(ind){
+    const i = t.checklist.findIndex(x => x.id === ind.dataset.indent);
+    checklistOp(list => indentItem(list, i));
+  }else if(out){
+    const i = t.checklist.findIndex(x => x.id === out.dataset.outdent);
+    checklistOp(list => outdentItem(list, i));
+  }else if(del){
+    // Removing a parent keeps its sub-items; they move up a level instead of
+    // vanishing with it.
+    const i = t.checklist.findIndex(x => x.id === del.dataset.delCheck);
+    checklistOp(list => {
+      const wasParent = hasChildren(list, i);
+      list.splice(i, 1);
+      if(wasParent) for(let k = i; k < list.length && list[k].level === 1; k++) list[k].level = 0;
+    });
+  }
 });
 /* ---------- links ---------- */
 function addLinkFromInputs(){
